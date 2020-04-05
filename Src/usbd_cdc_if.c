@@ -67,6 +67,25 @@
 /* It's up to user to redefine and/or remove those define */
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048
+
+/* The following structures groups all needed parameters to be configured for the 
+   ComPort. These parameters can modified on the fly by the host through CDC class
+   command class requests. */
+typedef struct
+{
+  uint32_t bitrate;
+  uint8_t  format;
+  uint8_t  paritytype;
+  uint8_t  datatype;
+}LINE_CODING;
+
+LINE_CODING linecoding =
+  {
+    115200, /* baud rate*/
+    0x00,   /* stop bits-1*/
+    0x00,   /* parity - none*/
+    0x08    /* nb. of bits 8*/
+  };
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -230,6 +249,13 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
     break;
 
   case CDC_GET_LINE_CODING:
+    pbuf[0] = (uint8_t)(linecoding.bitrate);
+    pbuf[1] = (uint8_t)(linecoding.bitrate >> 8);
+    pbuf[2] = (uint8_t)(linecoding.bitrate >> 16);
+    pbuf[3] = (uint8_t)(linecoding.bitrate >> 24);
+    pbuf[4] = linecoding.format;
+    pbuf[5] = linecoding.paritytype;
+    pbuf[6] = linecoding.datatype;
 
     break;
 
