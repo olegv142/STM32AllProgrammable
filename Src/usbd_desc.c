@@ -65,9 +65,9 @@
 
 #define USBD_VID     1155
 #define USBD_LANGID_STRING     1033
-#define USBD_MANUFACTURER_STRING     "STMicroelectronics"
-#define USBD_PID_HS     22337
-#define USBD_PRODUCT_STRING_HS     "STM32 TMC"
+#define USBD_MANUFACTURER_STRING     "TeraSense"
+#define USBD_PID_HS     65534
+#define USBD_PRODUCT_STRING_HS     "TeraCam"
 #define USBD_CONFIGURATION_STRING_HS     "TMC Config"
 #define USBD_INTERFACE_STRING_HS     "TMC Interface"
 
