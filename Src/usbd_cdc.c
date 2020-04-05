@@ -192,8 +192,8 @@ __ALIGN_BEGIN uint8_t USBD_CDC_CfgHSDesc[USB_CDC_CONFIG_DESC_SIZ] __ALIGN_END =
   0x00,   /* bInterfaceNumber: Number of Interface */
   0x00,   /* bAlternateSetting: Alternate setting */
   0x02,   /* bNumEndpoints: Two endpoints used */
-  0x0A,   /* bInterfaceClass: CDC */
-  0x00,   /* bInterfaceSubClass: */
+  0xFE,   /* bInterfaceClass: Application Specific USB Device Interface Class */
+  0x03,   /* bInterfaceSubClass: TMC */
   0x00,   /* bInterfaceProtocol: */
   0x00,   /* iInterface: */
 
@@ -239,8 +239,8 @@ __ALIGN_BEGIN uint8_t USBD_CDC_CfgFSDesc[USB_CDC_CONFIG_DESC_SIZ] __ALIGN_END =
   0x00,   /* bInterfaceNumber: Number of Interface */
   0x00,   /* bAlternateSetting: Alternate setting */
   0x02,   /* bNumEndpoints: Two endpoints used */
-  0x0A,   /* bInterfaceClass: CDC */
-  0x00,   /* bInterfaceSubClass: */
+  0xFE,   /* bInterfaceClass: Application Specific USB Device Interface Class */
+  0x03,   /* bInterfaceSubClass: TMC */
   0x00,   /* bInterfaceProtocol: */
   0x00,   /* iInterface: */
 
@@ -283,8 +283,8 @@ __ALIGN_BEGIN uint8_t USBD_CDC_OtherSpeedCfgDesc[USB_CDC_CONFIG_DESC_SIZ] __ALIG
   0x00,   /* bInterfaceNumber: Number of Interface */
   0x00,   /* bAlternateSetting: Alternate setting */
   0x02,   /* bNumEndpoints: Two endpoints used */
-  0x0A,   /* bInterfaceClass: CDC */
-  0x00,   /* bInterfaceSubClass: */
+  0xFE,   /* bInterfaceClass: Application Specific USB Device Interface Class */
+  0x03,   /* bInterfaceSubClass: TMC */
   0x00,   /* bInterfaceProtocol: */
   0x00,   /* iInterface: */
 
