@@ -23,7 +23,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "usb_tmc.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -68,24 +68,6 @@
 #define APP_RX_DATA_SIZE  2048
 #define APP_TX_DATA_SIZE  2048
 
-/* The following structures groups all needed parameters to be configured for the 
-   ComPort. These parameters can modified on the fly by the host through CDC class
-   command class requests. */
-typedef struct
-{
-  uint32_t bitrate;
-  uint8_t  format;
-  uint8_t  paritytype;
-  uint8_t  datatype;
-}LINE_CODING;
-
-LINE_CODING linecoding =
-  {
-    115200, /* baud rate*/
-    0x00,   /* stop bits-1*/
-    0x00,   /* parity - none*/
-    0x08    /* nb. of bits 8*/
-  };
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -202,75 +184,35 @@ static int8_t CDC_DeInit_HS(void)
   * @param  length: Number of data to be sent (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
+uint8_t  usb_tmc_last_cmd;
+uint16_t usb_tmc_last_len;
+
 static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 {
   /* USER CODE BEGIN 10 */
   switch(cmd)
   {
-  case CDC_SEND_ENCAPSULATED_COMMAND:
-
-    break;
-
-  case CDC_GET_ENCAPSULATED_RESPONSE:
-
-    break;
-
-  case CDC_SET_COMM_FEATURE:
-
-    break;
-
-  case CDC_GET_COMM_FEATURE:
-
-    break;
-
-  case CDC_CLEAR_COMM_FEATURE:
-
-    break;
-
-  /*******************************************************************************/
-  /* Line Coding Structure                                                       */
-  /*-----------------------------------------------------------------------------*/
-  /* Offset | Field       | Size | Value  | Description                          */
-  /* 0      | dwDTERate   |   4  | Number |Data terminal rate, in bits per second*/
-  /* 4      | bCharFormat |   1  | Number | Stop bits                            */
-  /*                                        0 - 1 Stop bit                       */
-  /*                                        1 - 1.5 Stop bits                    */
-  /*                                        2 - 2 Stop bits                      */
-  /* 5      | bParityType |  1   | Number | Parity                               */
-  /*                                        0 - None                             */
-  /*                                        1 - Odd                              */
-  /*                                        2 - Even                             */
-  /*                                        3 - Mark                             */
-  /*                                        4 - Space                            */
-  /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
-  /*******************************************************************************/
-  case CDC_SET_LINE_CODING:
-
-    break;
-
-  case CDC_GET_LINE_CODING:
-    pbuf[0] = (uint8_t)(linecoding.bitrate);
-    pbuf[1] = (uint8_t)(linecoding.bitrate >> 8);
-    pbuf[2] = (uint8_t)(linecoding.bitrate >> 16);
-    pbuf[3] = (uint8_t)(linecoding.bitrate >> 24);
-    pbuf[4] = linecoding.format;
-    pbuf[5] = linecoding.paritytype;
-    pbuf[6] = linecoding.datatype;
-
-    break;
-
-  case CDC_SET_CONTROL_LINE_STATE:
-
-    break;
-
-  case CDC_SEND_BREAK:
-
+  case USB_TMC_GET_CAPABILITIES:
+    pbuf[0] = USB_TMC_STATUS_SUCCESS;
+    pbuf[1] = 0;
+    pbuf[2] = 0;
+    pbuf[3] = 1; // Version 1.0
+    pbuf[4] = 0;
+    pbuf[5] = 0;
+    pbuf[6] = 0;
+    pbuf[7] = 0;
+    pbuf[8] = 0;
+    pbuf[9] = 0;
+    pbuf[10] = 0;
+    pbuf[11] = 0;
+    pbuf[12] = 0;
     break;
 
   default:
     break;
   }
-
+  usb_tmc_last_cmd = cmd;
+  usb_tmc_last_len = length;
   return (USBD_OK);
   /* USER CODE END 10 */
 }
