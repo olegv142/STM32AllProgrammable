@@ -24,6 +24,7 @@
 
 /* USER CODE BEGIN INCLUDE */
 #include "usb_tmc.h"
+#include <string.h>
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -231,10 +232,47 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
+unsigned usb_tmc_rx_ignored = 0;
+
 static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 11 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, &Buf[0]);
+  uint8_t msg_type = UserRxBufferHS[0];
+  uint32_t msg_len = *(uint32_t*)(UserRxBufferHS + 4);
+  uint8_t* rx_buff = UserRxBufferHS;
+  if (
+    (msg_type != USB_TMC_DEV_DEP_MSG_OUT && msg_type != USB_TMC_REQUEST_DEV_DEP_MSG_IN) ||
+    (0xff ^ UserRxBufferHS[1] ^ UserRxBufferHS[2]) || UserRxBufferHS[3] != 0
+  ) {
+    // Ignore bad packets
+    ++usb_tmc_rx_ignored;
+    goto rx_restart;
+  }
+
+  if (msg_type == USB_TMC_DEV_DEP_MSG_OUT) {
+    if (USB_TMC_HDR_SZ + msg_len > sizeof(UserRxBufferHS)) {
+      // Ignore bad packets
+      ++usb_tmc_rx_ignored;
+      goto rx_restart;
+    }
+    if (Buf + *Len >= UserRxBufferHS + USB_TMC_HDR_SZ + msg_len) {
+      // packet receive competed
+      USB_TMC_Receive(UserRxBufferHS + USB_TMC_HDR_SZ, msg_len);
+    } else if (Buf + *Len + USB_HS_MAX_PACKET_SIZE <= UserRxBufferHS + sizeof(UserRxBufferHS)) {
+      // receive more
+      rx_buff = Buf + *Len;
+    } else {
+      ++usb_tmc_rx_ignored;
+    }
+  } else {
+    // msg_type == USB_TMC_REQUEST_DEV_DEP_MSG_IN
+    if (USB_TMC_HDR_SZ + msg_len > sizeof(UserTxBufferHS))
+      msg_len = sizeof(UserTxBufferHS) - USB_TMC_HDR_SZ;
+    USB_TMC_RequestResponse(UserRxBufferHS[1], msg_len);
+  }
+
+rx_restart:
+  USBD_CDC_SetRxBuffer(&hUsbDeviceHS, rx_buff);
   USBD_CDC_ReceivePacket(&hUsbDeviceHS);
   return (USBD_OK);
   /* USER CODE END 11 */
@@ -262,6 +300,27 @@ uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
+
+uint8_t USB_TMC_Reply(uint8_t const* pbuf, unsigned len, uint8_t tag)
+{
+  if (USB_TMC_HDR_SZ + len > sizeof(UserTxBufferHS))
+    return USBD_FAIL;
+
+  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceHS.pClassData;
+  if (hcdc->TxState != 0)
+    return USBD_BUSY;
+
+  UserTxBufferHS[0] = USB_TMC_DEV_DEP_MSG_IN;
+  UserTxBufferHS[1] = tag;
+  UserTxBufferHS[2] = ~tag;
+  UserTxBufferHS[3] = 0;
+  *(uint32_t*)(UserTxBufferHS + 4) = len;
+  *(uint32_t*)(UserTxBufferHS + 8) = 1;
+  memcpy(UserTxBufferHS + USB_TMC_HDR_SZ, pbuf, len);
+
+  USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, USB_TMC_HDR_SZ + len);
+  return USBD_CDC_TransmitPacket(&hUsbDeviceHS);
+}
 
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 

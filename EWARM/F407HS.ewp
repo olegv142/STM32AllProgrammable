@@ -372,7 +372,7 @@
                 </option>
                 <option>
                     <name>CCOptLevel</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CCOptStrategy</name>
@@ -381,7 +381,7 @@
                 </option>
                 <option>
                     <name>CCOptLevelSlave</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CompilerMisraRules98</name>
@@ -1080,6 +1080,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\Src\usb_device.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\Src\usb_tmc_handler.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\Src\usbd_cdc.c</name>

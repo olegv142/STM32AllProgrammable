@@ -25,7 +25,7 @@
 #include "usbd_conf.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "version.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,9 +65,9 @@
 
 #define USBD_VID     1155
 #define USBD_LANGID_STRING     1033
-#define USBD_MANUFACTURER_STRING     "TeraSense"
+#define USBD_MANUFACTURER_STRING     VENDOR
 #define USBD_PID_HS     65534
-#define USBD_PRODUCT_STRING_HS     "TeraCam"
+#define USBD_PRODUCT_STRING_HS     PRODUCT
 #define USBD_CONFIGURATION_STRING_HS     "TMC Config"
 #define USBD_INTERFACE_STRING_HS     "TMC Interface"
 
