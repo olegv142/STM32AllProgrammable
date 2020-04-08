@@ -25,3 +25,13 @@ static inline void u32_to_hex(uint32_t v, char buf[8])
 	u16_to_hex(v >> 16, buf);
 	u16_to_hex(v, buf + 4);
 }
+
+static inline unsigned skip_through(char c, uint8_t const* buf, unsigned len)
+{
+	unsigned cnt;
+	for (cnt = 0; len; --len, ++buf, ++cnt) {
+		if (*buf == c)
+			return cnt + 1;
+	}
+	return 0;
+}

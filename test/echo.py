@@ -25,7 +25,7 @@ def random_buff():
 	return rand_buff[off:off+sz]
 
 def echo(dev, b):
-	dev.write_raw(':ECHO' + b)
+	dev.write_raw(':TEST :ECHO' + b)
 	r = dev.read_raw(max_size)
 	if r != b:
 		print 'data mismatch'

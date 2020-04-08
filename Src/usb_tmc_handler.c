@@ -70,14 +70,26 @@ void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
 	++tmc_wr_ignored;
 }
 
-void tmc_rx_dev_command(uint8_t const* pbuf, unsigned len)
+void tmc_rx_test_sub_command(uint8_t const* pbuf, unsigned len)
 {
-	if (PREFIX_MATCHED(CMD_ECHO, pbuf, len)) {
+	if (PREFIX_MATCHED(CMD_ECHO, pbuf, len))
+	{
 		pbuf += STRZ_LEN(CMD_ECHO);
 		len  -= STRZ_LEN(CMD_ECHO);
 		if (len > USB_TMC_TX_MAX_DATA_SZ)
 			len = USB_TMC_TX_MAX_DATA_SZ;
 		tmc_schedule_reply_buff(pbuf, len);
+		return;
+	}
+	// unhanded command
+	++tmc_wr_ignored;
+}
+
+void tmc_rx_dev_command(uint8_t const* pbuf, unsigned len)
+{
+	unsigned skip;
+	if (PREFIX_MATCHED(CMD_TEST, pbuf, len) && (skip = skip_through(':', pbuf, len))) {
+		tmc_rx_test_sub_command(pbuf + skip, len - skip);
 		return;
 	}
 	// unhanded command
