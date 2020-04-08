@@ -35,10 +35,10 @@ void USB_TMC_Receive(uint8_t const* pbuf, unsigned len)
 	if (CMD_MATCHED("*IDN?", pbuf, len)) {
 		tmc_state = tmc_idn;
 	}
-	else if (CMD_MATCHED("*ECHO", pbuf, len)) {
+	else if (CMD_MATCHED(":ECHO", pbuf, len)) {
 		tmc_state = tmc_echo;
-		pbuf += STRZ_LEN("*ECHO");
-		len  -= STRZ_LEN("*ECHO");
+		pbuf += STRZ_LEN(":ECHO");
+		len  -= STRZ_LEN(":ECHO");
 		if (len > ECHO_BUFF_SZ)
 			len = ECHO_BUFF_SZ;
 		memcpy(echo_buff, pbuf, echo_len = len);
