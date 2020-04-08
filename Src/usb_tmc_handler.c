@@ -57,7 +57,7 @@ static void tmc_idn_reply(void)
 
 // Error counters for debug
 unsigned tmc_wr_ignored;
-unsigned tmc_rd_ignored;
+unsigned tmc_rd_empty;
 unsigned tmc_overrun;
 
 void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
@@ -109,19 +109,19 @@ void USB_TMC_Receive(uint8_t const* pbuf, unsigned len)
 static void tmc_reply(void)
 {
 	unsigned len = tmc_reply_len <= tmc_reply_max_len ? tmc_reply_len : tmc_reply_max_len;
-	uint8_t tag = tmc_reply_tag;
 	tmc_reply_len = 0;
 	tmc_reply_max_len = 0;
 	tmc_reply_rdy = false;
 	tmc_reply_req = false;
 	tmc_pending = false;
-	USB_TMC_Reply(len, tag);
+	USB_TMC_Reply(len, tmc_reply_tag);
 }
 
 void USB_TMC_RequestResponse(uint8_t tag, unsigned max_len)
 {
 	if (!tmc_pending) {
-		++tmc_rd_ignored;
+		USB_TMC_Reply(0, tag);
+		++tmc_rd_empty;
 		return;
 	}
 	tmc_reply_tag = tag;

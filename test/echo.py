@@ -35,6 +35,7 @@ def test():
 	init()
 	dev = open_device()
 	print dev.query('*IDN?')
+	assert dev.read_raw() == ''
 	loops, bytes = 0, 0
 	started = time.time() 
 	try:
