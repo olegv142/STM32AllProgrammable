@@ -3,5 +3,5 @@
 //
 // Generic commands
 //
-#define CMD_IDN  "*IDN?"
-#define CMD_ECHO ":ECHO"
+#define CMD_IDN  "IDN?"
+#define CMD_ECHO "ECHO"

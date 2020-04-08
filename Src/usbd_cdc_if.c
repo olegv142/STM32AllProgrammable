@@ -313,7 +313,7 @@ uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
 unsigned usb_tmc_tx_invalid = 0;
 unsigned usb_tmc_tx_busy = 0;
 
-uint8_t USB_TMC_Reply(uint8_t const* pbuf, unsigned len, uint8_t tag)
+uint8_t USB_TMC_Reply(unsigned len, uint8_t tag)
 {
   if (len > USB_TMC_TX_MAX_DATA_SZ) {
     ++usb_tmc_tx_invalid;
@@ -332,9 +332,6 @@ uint8_t USB_TMC_Reply(uint8_t const* pbuf, unsigned len, uint8_t tag)
   UserTxBufferHS[3] = 0;
   *(uint32_t*)(UserTxBufferHS + 4) = len;
   *(uint32_t*)(UserTxBufferHS + 8) = 1;
-
-  if (pbuf)
-    memcpy(UserTxBufferHS + USB_TMC_HDR_SZ, pbuf, len);
 
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, USB_TMC_HDR_SZ + len);
   return USBD_CDC_TransmitPacket(&hUsbDeviceHS);
