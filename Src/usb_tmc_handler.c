@@ -14,8 +14,8 @@ static const char* idn_ptr;
 static void idn_init(void)
 {
 	char* sn_buff = idn_buff + STRZ_LEN(IDN_VENDOR_PRODUCT);
-	u32_to_hex(UUID[0] ^ UUID[1], sn_buff);
-	u32_to_hex(UUID[2], sn_buff + 8);
+	u32_to_hex(UUID[0] + UUID[2], sn_buff);
+	u32_to_hex(UUID[1], sn_buff + 8);
 	idn_ptr = idn_buff;
 }
 

@@ -16,6 +16,7 @@ def init():
 def open_device():
 	rm = pv.ResourceManager()
 	r = rm.list_resources()
+	print 'opening', r[0]
 	return rm.open_resource(r[0])
 
 def random_buff():
