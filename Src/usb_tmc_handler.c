@@ -27,10 +27,8 @@ static void idn_init(void)
 	idn_ptr = idn_string;
 }
 
-#define ECHO_BUFF_SZ 1024
-static uint8_t  echo_buff[ECHO_BUFF_SZ];
 static unsigned echo_len;
- 
+
 void USB_TMC_Receive(uint8_t const* pbuf, unsigned len)
 {
 	if (PREFIX_MATCHED(CMD_IDN, pbuf, len)) {
@@ -40,9 +38,9 @@ void USB_TMC_Receive(uint8_t const* pbuf, unsigned len)
 		tmc_state = tmc_echo;
 		pbuf += STRZ_LEN(CMD_ECHO);
 		len  -= STRZ_LEN(CMD_ECHO);
-		if (len > ECHO_BUFF_SZ)
-			len = ECHO_BUFF_SZ;
-		memcpy(echo_buff, pbuf, echo_len = len);
+		if (len > USB_TMC_TX_MAX_DATA_SZ)
+			len = USB_TMC_TX_MAX_DATA_SZ;
+		memcpy(USB_TMC_TxDataBuffer(), pbuf, echo_len = len);
 	}
 }
 
@@ -58,7 +56,7 @@ void USB_TMC_RequestResponse(uint8_t tag, unsigned max_len)
 	case tmc_echo:
 		if (echo_len > max_len)
 			echo_len = max_len;
-		USB_TMC_Reply(echo_buff, echo_len, tag);
+		USB_TMC_Reply(NULL, echo_len, tag);
 		tmc_state = tmc_idle;
 		break;
 	}

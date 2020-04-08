@@ -67,8 +67,8 @@
 /* USER CODE BEGIN PRIVATE_DEFINES */
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
-#define APP_RX_DATA_SIZE  2048
-#define APP_TX_DATA_SIZE  2048
+#define APP_RX_DATA_SIZE  (USB_TMC_HDR_SZ + USB_TMC_RX_MAX_DATA_SZ)
+#define APP_TX_DATA_SIZE  (USB_TMC_HDR_SZ + USB_TMC_TX_MAX_DATA_SZ)
 
 /* USER CODE END PRIVATE_DEFINES */
 
@@ -136,6 +136,11 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length);
 static int8_t CDC_Receive_HS(uint8_t* pbuf, uint32_t *Len);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
+
+uint8_t* USB_TMC_TxDataBuffer(void)
+{
+	return UserTxBufferHS + USB_TMC_HDR_SZ;
+}
 
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
@@ -233,6 +238,8 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
+
+// Error counter for debug
 unsigned usb_tmc_rx_ignored = 0;
 
 static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
@@ -251,7 +258,7 @@ static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
   }
 
   if (msg_type == USB_TMC_DEV_DEP_MSG_OUT) {
-    if (USB_TMC_HDR_SZ + msg_len > sizeof(UserRxBufferHS)) {
+    if (msg_len > USB_TMC_RX_MAX_DATA_SZ) {
       // Ignore bad packets
       ++usb_tmc_rx_ignored;
       goto rx_restart;
@@ -267,8 +274,8 @@ static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
     }
   } else {
     // msg_type == USB_TMC_REQUEST_DEV_DEP_MSG_IN
-    if (USB_TMC_HDR_SZ + msg_len > sizeof(UserTxBufferHS))
-      msg_len = sizeof(UserTxBufferHS) - USB_TMC_HDR_SZ;
+    if (msg_len > USB_TMC_TX_MAX_DATA_SZ)
+      msg_len = USB_TMC_TX_MAX_DATA_SZ;
     USB_TMC_RequestResponse(UserRxBufferHS[1], msg_len);
   }
 
@@ -302,14 +309,22 @@ uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
+// Error counters for debug
+unsigned usb_tmc_tx_invalid = 0;
+unsigned usb_tmc_tx_busy = 0;
+
 uint8_t USB_TMC_Reply(uint8_t const* pbuf, unsigned len, uint8_t tag)
 {
-  if (USB_TMC_HDR_SZ + len > sizeof(UserTxBufferHS))
+  if (len > USB_TMC_TX_MAX_DATA_SZ) {
+    ++usb_tmc_tx_invalid;
     return USBD_FAIL;
+  }
 
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceHS.pClassData;
-  if (hcdc->TxState != 0)
+  if (hcdc->TxState != 0) {
+    ++usb_tmc_tx_busy;
     return USBD_BUSY;
+  }
 
   UserTxBufferHS[0] = USB_TMC_DEV_DEP_MSG_IN;
   UserTxBufferHS[1] = tag;
@@ -317,7 +332,9 @@ uint8_t USB_TMC_Reply(uint8_t const* pbuf, unsigned len, uint8_t tag)
   UserTxBufferHS[3] = 0;
   *(uint32_t*)(UserTxBufferHS + 4) = len;
   *(uint32_t*)(UserTxBufferHS + 8) = 1;
-  memcpy(UserTxBufferHS + USB_TMC_HDR_SZ, pbuf, len);
+
+  if (pbuf)
+    memcpy(UserTxBufferHS + USB_TMC_HDR_SZ, pbuf, len);
 
   USBD_CDC_SetTxBuffer(&hUsbDeviceHS, UserTxBufferHS, USB_TMC_HDR_SZ + len);
   return USBD_CDC_TransmitPacket(&hUsbDeviceHS);
