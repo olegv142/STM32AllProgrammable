@@ -9,6 +9,9 @@
 #define USB_TMC_RX_MAX_DATA_SZ (1024 + USB_HS_MAX_PACKET_SIZE - USB_TMC_HDR_SZ)
 #define USB_TMC_TX_MAX_DATA_SZ (4096 + USB_HS_MAX_PACKET_SIZE - USB_TMC_HDR_SZ)
 
+// Initialize device data
+void USB_TMC_init(void);
+
 // Transmit data buffer
 uint8_t* USB_TMC_TxDataBuffer(void);
 

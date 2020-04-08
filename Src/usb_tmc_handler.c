@@ -140,3 +140,11 @@ void USB_TMC_Process(void)
 	if (tmc_reply_rdy && tmc_reply_req)
 		tmc_reply();
 }
+
+extern uint8_t USBD_HS_DeviceDesc[];
+
+void USB_TMC_init(void)
+{
+	USBD_HS_DeviceDesc[3] = 0x00; /*bDeviceClass: This is an Interface Class Defined Device*/
+	USBD_HS_DeviceDesc[4] = 0x00; /*bDeviceSubClass*/
+}

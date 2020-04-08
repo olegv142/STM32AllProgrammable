@@ -83,7 +83,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  USB_TMC_init();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
