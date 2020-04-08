@@ -19,7 +19,7 @@ def open_device():
 	return rm.open_resource(r[0])
 
 def random_buff():
-	sz = random.randrange(1, max_size + 1)
+	sz = random.randrange(0, max_size + 1)
 	off = random.randrange(0, len(rand_buff) - sz + 1)
 	return rand_buff[off:off+sz]
 
