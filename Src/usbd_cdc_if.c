@@ -23,6 +23,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "usb_tmc_proto.h"
 #include "usb_tmc.h"
 #include <string.h>
 /* USER CODE END INCLUDE */

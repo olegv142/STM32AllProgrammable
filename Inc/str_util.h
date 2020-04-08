@@ -1,7 +1,7 @@
 #pragma once
 
 #define STRZ_LEN(s) (sizeof(s)-1)
-#define CMD_MATCHED(cmd, buf, len) (len >= STRZ_LEN(cmd) && !strncmp(cmd, (const char*)buf, STRZ_LEN(cmd)))
+#define PREFIX_MATCHED(pref, buf, len) (len >= STRZ_LEN(pref) && !strncmp(pref, (const char*)buf, STRZ_LEN(pref)))
 
 static inline char to_hex(uint8_t v)
 {
