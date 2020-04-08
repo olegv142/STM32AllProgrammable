@@ -137,6 +137,11 @@ static int8_t CDC_Receive_HS(uint8_t* pbuf, uint32_t *Len);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
 
+// Error counters for debug
+unsigned usb_tmc_rx_ignored = 0;
+unsigned usb_tmc_tx_invalid = 0;
+unsigned usb_tmc_tx_busy = 0;
+
 uint8_t* USB_TMC_TxDataBuffer(void)
 {
 	return UserTxBufferHS + USB_TMC_HDR_SZ;
@@ -191,9 +196,6 @@ static int8_t CDC_DeInit_HS(void)
   * @param  length: Number of data to be sent (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-uint8_t  usb_tmc_last_cmd;
-uint16_t usb_tmc_last_len;
-
 static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 {
   /* USER CODE BEGIN 10 */
@@ -218,8 +220,6 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   default:
     break;
   }
-  usb_tmc_last_cmd = cmd;
-  usb_tmc_last_len = length;
   return (USBD_OK);
   /* USER CODE END 10 */
 }
@@ -238,10 +238,6 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-
-// Error counter for debug
-unsigned usb_tmc_rx_ignored = 0;
-
 static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 11 */
@@ -308,10 +304,6 @@ uint8_t CDC_Transmit_HS(uint8_t* Buf, uint16_t Len)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
-
-// Error counters for debug
-unsigned usb_tmc_tx_invalid = 0;
-unsigned usb_tmc_tx_busy = 0;
 
 uint8_t USB_TMC_Reply(unsigned len, uint8_t tag)
 {
