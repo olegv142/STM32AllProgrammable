@@ -34,6 +34,7 @@ def echo(dev, b):
 def test():
 	init()
 	dev = open_device()
+	print dev.query('*IDN?')
 	loops, bytes = 0, 0
 	started = time.time() 
 	try:
