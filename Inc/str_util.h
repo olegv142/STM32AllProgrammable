@@ -5,7 +5,7 @@
 
 static inline char to_hex(uint8_t v)
 {
-	return v < 10 ? '0' + v : 'A' + v - 10;
+	return v >= 0xA ? 'A' + v - 0xA : '0' + v;
 }
 
 static inline void byte_to_hex(uint8_t v, char buf[2])
@@ -34,4 +34,51 @@ static inline unsigned skip_through(char c, uint8_t const* buf, unsigned len)
 			return cnt + 1;
 	}
 	return 0;
+}
+
+static inline unsigned scan_u(uint8_t const* buf, unsigned len, unsigned* val)
+{
+	unsigned v = 0, radix = 10, cnt;
+	for (cnt = 0; len; --len, ++buf, ++cnt)
+	{
+		unsigned char d;
+		char c = *buf;
+		switch (c) {
+		case 'X':
+		case 'x':
+		case 'H':
+		case 'h':
+			if (v) return 0;
+			radix = 16;
+			continue;
+		case 'Q':
+		case 'q':
+			if (v) return 0;
+			radix = 8;
+			continue;
+		case 'B':
+		case 'b':
+			if (v) return 0;
+			radix = 2;
+			continue;
+		default:
+			;
+		}
+		if (c < '0')
+			break;
+		if (radix <= 10 && c >= '0' + radix)
+			break;
+		if (c <= '9')
+			d = c - '0';
+		else if ('a' <= c && c <= 'f')
+			d = c - 'a' + 0xa;
+		else if ('A' <= c && c <= 'F')
+			d = c - 'A' + 0xA;
+		else
+			break;
+		v *= radix;
+		v += d;
+	}
+	*val = v;
+	return cnt;
 }
