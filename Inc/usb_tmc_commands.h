@@ -11,7 +11,11 @@
 
 // Programmable Logic access commands
 #define CMD_PL    "PL"
+
+// Flash access commands
 #define CMD_FLASH "FLASH"
-#define CMD_RD    "RD"
-#define CMD_WR    "WR"
-#define CMD_WAIT  "WA"
+#define CMD_RD    "RD"  // Read transaction
+#define CMD_WR    "WR"  // Write transaction
+#define CMD_WAIT  "WA"  // Wait BUSY status clear, returns status byte
+#define CMD_PROG  "PR"  // Program is the combination of wait, write enable and write, returns status byte
+
