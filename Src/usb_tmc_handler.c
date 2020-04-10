@@ -77,13 +77,16 @@ static void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
 	++tmc_wr_ignored;
 }
 
+// Flash transaction size
+static unsigned tmc_pl_flash_tx_sz;
+
 static void tmc_pl_flash_handler(void)
 {
 	HAL_StatusTypeDef sta;
 	uint8_t * buff = USB_TMC_TxDataBuffer();
 	HAL_GPIO_WritePin(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin, GPIO_PIN_RESET);
 	sta = HAL_SPI_TransmitReceive(
-			&hspi3, buff, buff, tmc_reply_len, HAL_MAX_DELAY
+			&hspi3, buff, buff, tmc_pl_flash_tx_sz, HAL_MAX_DELAY
 		);
 	HAL_GPIO_WritePin(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin, GPIO_PIN_SET);
 	if (sta != HAL_OK)
@@ -91,7 +94,7 @@ static void tmc_pl_flash_handler(void)
 	tmc_ready_to_reply();
 }
 
-static void tmc_rx_pl_flash(uint8_t const* pbuf, unsigned len, unsigned rd_len)
+static void tmc_rx_pl_flash(uint8_t const* pbuf, unsigned len, unsigned rd_len, bool rd_reply)
 {
 	if (len + rd_len > USB_TMC_TX_MAX_DATA_SZ) {
 		// unhanded command
@@ -99,7 +102,8 @@ static void tmc_rx_pl_flash(uint8_t const* pbuf, unsigned len, unsigned rd_len)
 		return;
 	}
 	memcpy(USB_TMC_TxDataBuffer(), pbuf, len);
-	tmc_reply_len = len + rd_len;
+	tmc_pl_flash_tx_sz = len + rd_len;
+	tmc_reply_len = rd_reply ? tmc_pl_flash_tx_sz : 0;
 	tmc_schedule_handler(tmc_pl_flash_handler);
 }
 
@@ -107,7 +111,7 @@ static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 {
 	unsigned skip, skip_len, rd_len;
 	if (PREFIX_MATCHED(CMD_WR, pbuf, len)) {
-		tmc_rx_pl_flash(pbuf + STRZ_LEN(CMD_WR), len - STRZ_LEN(CMD_WR), 0);
+		tmc_rx_pl_flash(pbuf + STRZ_LEN(CMD_WR), len - STRZ_LEN(CMD_WR), 0, false);
 		return;
 	}
 	if (PREFIX_MATCHED(CMD_RD, pbuf, len)
@@ -115,7 +119,7 @@ static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 		&& (skip_len = scan_u(pbuf + skip, len - skip, &rd_len))
 		&& len > skip + skip_len && pbuf[skip + skip_len] == '#'
 	) {
-		tmc_rx_pl_flash(pbuf + skip + skip_len + 1, len - skip - skip_len - 1, rd_len);
+		tmc_rx_pl_flash(pbuf + skip + skip_len + 1, len - skip - skip_len - 1, rd_len, true);
 		return;
 	}
 	// unhanded command
