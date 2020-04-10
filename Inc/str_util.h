@@ -43,26 +43,23 @@ static inline unsigned scan_u(uint8_t const* buf, unsigned len, unsigned* val)
 	{
 		unsigned char d;
 		char c = *buf;
-		switch (c) {
-		case 'X':
-		case 'x':
-		case 'H':
-		case 'h':
-			if (v) return 0;
-			radix = 16;
-			continue;
-		case 'Q':
-		case 'q':
-			if (v) return 0;
-			radix = 8;
-			continue;
-		case 'B':
-		case 'b':
-			if (v) return 0;
-			radix = 2;
-			continue;
-		default:
-			;
+		if (!cnt) {
+			switch (c) {
+			case 'X':
+			case 'x':
+			case 'H':
+			case 'h':
+				radix = 16;
+				continue;
+			case 'Q':
+				radix = 8;
+				continue;
+			case 'B':
+				radix = 2;
+				continue;
+			default:
+				;
+			}
 		}
 		if (c < '0')
 			break;
