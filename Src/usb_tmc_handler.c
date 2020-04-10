@@ -54,7 +54,7 @@ static inline void tmc_schedule_handler(tmc_handler_t h)
 	tmc_handler = h;
 }
 
-static void tmc_idn_reply(void)
+static void tmc_idn_handler(void)
 {
 	if (!idn_ptr)
 		idn_init();
@@ -70,7 +70,7 @@ unsigned tmc_overrun;
 static void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
 {
 	if (PREFIX_MATCHED(CMD_IDN, pbuf, len)) {
-		tmc_schedule_handler(tmc_idn_reply);
+		tmc_schedule_handler(tmc_idn_handler);
 		return;
 	}
 	// unhanded command
@@ -79,19 +79,53 @@ static void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
 
 // Flash transaction size
 static unsigned tmc_pl_flash_tx_sz;
+static unsigned tmc_pl_flash_wait;
 
-static void tmc_pl_flash_handler(void)
+static inline void pl_flash_cs(bool active)
+{
+	HAL_GPIO_WritePin(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin, active ? GPIO_PIN_RESET : GPIO_PIN_SET);
+}
+
+static void tmc_pl_flash_tx_handler(void)
 {
 	HAL_StatusTypeDef sta;
 	uint8_t * buff = USB_TMC_TxDataBuffer();
-	HAL_GPIO_WritePin(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin, GPIO_PIN_RESET);
+	pl_flash_cs(true);
 	sta = HAL_SPI_TransmitReceive(
 			&hspi3, buff, buff, tmc_pl_flash_tx_sz, HAL_MAX_DELAY
 		);
-	HAL_GPIO_WritePin(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin, GPIO_PIN_SET);
+	pl_flash_cs(false);
 	if (sta != HAL_OK)
 		++tmc_errors;
 	tmc_ready_to_reply();
+}
+
+static void tmc_pl_flash_wait_handler(void)
+{
+	HAL_StatusTypeDef sta;
+	uint8_t cmd = 0x5, status = 1;
+	uint32_t start = HAL_GetTick();
+	pl_flash_cs(true);
+	sta = HAL_SPI_Transmit(&hspi3, &cmd, 1, HAL_MAX_DELAY);
+	if (sta != HAL_OK) {
+		++tmc_errors;
+		goto done;
+	}
+	for (;;)  {
+		sta = HAL_SPI_Receive(&hspi3, &status, 1, HAL_MAX_DELAY);
+		if (sta != HAL_OK) {
+			++tmc_errors;
+			goto done;
+		}
+		if (!(status & 1))
+			break;
+		if (HAL_GetTick() - start > tmc_pl_flash_wait)
+			break;
+	}
+done:
+	pl_flash_cs(false);
+	USB_TMC_TxDataBuffer()[0] = status;
+	tmc_schedule_reply(1);
 }
 
 static void tmc_rx_pl_flash(uint8_t const* pbuf, unsigned len, unsigned rd_len, bool rd_reply)
@@ -104,22 +138,30 @@ static void tmc_rx_pl_flash(uint8_t const* pbuf, unsigned len, unsigned rd_len, 
 	memcpy(USB_TMC_TxDataBuffer(), pbuf, len);
 	tmc_pl_flash_tx_sz = len + rd_len;
 	tmc_reply_len = rd_reply ? tmc_pl_flash_tx_sz : 0;
-	tmc_schedule_handler(tmc_pl_flash_handler);
+	tmc_schedule_handler(tmc_pl_flash_tx_handler);
 }
 
 static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 {
-	unsigned skip, skip_len, rd_len;
+	unsigned skip, skip_arg, arg;
 	if (PREFIX_MATCHED(CMD_WR, pbuf, len)) {
 		tmc_rx_pl_flash(pbuf + STRZ_LEN(CMD_WR), len - STRZ_LEN(CMD_WR), 0, false);
 		return;
 	}
 	if (PREFIX_MATCHED(CMD_RD, pbuf, len)
 		&& (skip = skip_through('#', pbuf, len))
-		&& (skip_len = scan_u(pbuf + skip, len - skip, &rd_len))
-		&& len > skip + skip_len && pbuf[skip + skip_len] == '#'
+		&& (skip_arg = scan_u(pbuf + skip, len - skip, &arg))
+		&& len > skip + skip_arg && pbuf[skip + skip_arg] == '#'
 	) {
-		tmc_rx_pl_flash(pbuf + skip + skip_len + 1, len - skip - skip_len - 1, rd_len, true);
+		tmc_rx_pl_flash(pbuf + skip + skip_arg + 1, len - skip - skip_arg - 1, arg, true);
+		return;
+	}
+	if (PREFIX_MATCHED(CMD_WAIT, pbuf, len)
+		&& (skip = skip_through('#', pbuf, len))
+		&& scan_u(pbuf + skip, len - skip, &arg)
+	) {
+		tmc_pl_flash_wait = arg;
+		tmc_schedule_handler(tmc_pl_flash_wait_handler);
 		return;
 	}
 	// unhanded command

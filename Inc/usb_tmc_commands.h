@@ -14,3 +14,4 @@
 #define CMD_FLASH "FLASH"
 #define CMD_RD    "RD"
 #define CMD_WR    "WR"
+#define CMD_WAIT  "WA"
