@@ -32,6 +32,8 @@ static inline unsigned skip_through(char c, uint8_t const* buf, unsigned len)
 	for (cnt = 0; len; --len, ++buf, ++cnt) {
 		if (*buf == c)
 			return cnt + 1;
+		if (*buf == ':')
+			break;
 	}
 	return 0;
 }
