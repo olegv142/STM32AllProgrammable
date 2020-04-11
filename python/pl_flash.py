@@ -144,7 +144,12 @@ if __name__ == '__main__':
 		print 'writing %u bytes at offset %u ..' % (sz, off)
 		assert program(dev, off, data)
 		print 'verifying ..'
-		assert read_content(dev, off, sz) == data
+		rdata = read_content(dev, off, sz)
+		assert len(rdata) == sz
+		for i, c in enumerate(rdata):
+			if c != data[i]:
+				print '%#0.2x != %#0.2x @%#x' % (ord(c), ord(data[i]), i)
+				break
 		print 'done'
 	else:
 		print 'ID =', read_id(dev)
