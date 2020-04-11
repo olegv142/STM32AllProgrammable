@@ -60,6 +60,14 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define FFLASH_CS_Pin GPIO_PIN_15
 #define FFLASH_CS_GPIO_Port GPIOA
+#define PROGRAM_B_Pin GPIO_PIN_0
+#define PROGRAM_B_GPIO_Port GPIOD
+#define DONE_Pin GPIO_PIN_1
+#define DONE_GPIO_Port GPIOD
+#define PL_CS_Pin GPIO_PIN_2
+#define PL_CS_GPIO_Port GPIOD
+#define PL_SRQ_Pin GPIO_PIN_3
+#define PL_SRQ_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
 extern SPI_HandleTypeDef hspi3;
 /* USER CODE END Private defines */
