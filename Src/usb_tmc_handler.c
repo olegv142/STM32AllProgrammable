@@ -3,6 +3,7 @@
 #include "version.h"
 #include "str_util.h"
 #include "uuid.h"
+#include "pl.h"
 #include "pl_flash.h"
 #include "main.h"
 #include <string.h>
@@ -163,9 +164,26 @@ static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 	++tmc_wr_ignored;
 }
 
+static inline void tmc_pl_report_status(void)
+{
+	uint8_t resp = '0' + pl_status;
+	tmc_schedule_reply_buff(&resp, 1);
+}
+
 static void tmc_rx_pl_sub_command(uint8_t const* pbuf, unsigned len)
 {
-	unsigned skip;
+	unsigned skip, arg;
+	if (PREFIX_MATCHED(CMD_ACTIVE, pbuf, len)) {
+		if (len > STRZ_LEN(CMD_ACTIVE) && pbuf[STRZ_LEN(CMD_ACTIVE)] == '?') {
+			tmc_pl_report_status();
+			return;
+		}
+		if ((skip = skip_through('#', pbuf, len)) && scan_u(pbuf + skip, len - skip, &arg)) {
+			pl_enable(arg != 0);
+			return;
+		}
+	}
+
 	if (PREFIX_MATCHED(CMD_FLASH, pbuf, len) && (skip = skip_through(':', pbuf, len))) {
 		tmc_rx_pl_flash_sub_command(pbuf + skip, len - skip);
 		return;

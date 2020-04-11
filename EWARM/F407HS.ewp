@@ -1073,6 +1073,9 @@
                 <name>$PROJ_DIR$\..\Src\main.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\Src\pl.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\Src\pl_flash.c</name>
             </file>
             <file>

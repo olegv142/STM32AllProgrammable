@@ -12,7 +12,10 @@
 // Programmable Logic access commands
 #define CMD_PL    "PL"
 
-// Flash access commands
+// PL state control
+#define CMD_ACTIVE "ACTIVE"
+
+// PL flash access commands
 #define CMD_FLASH "FLASH"
 #define CMD_RD    "RD"  // Read transaction
 #define CMD_WR    "WR"  // Write transaction

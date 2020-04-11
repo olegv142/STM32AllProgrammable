@@ -25,6 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usb_tmc.h"
+#include "pl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,7 +101,7 @@ int main(void)
   MX_DMA_Init();
   MX_DCMI_Init();
   /* USER CODE BEGIN 2 */
-
+  pl_start();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,6 +112,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     USB_TMC_Process();
+
+    pl_process();
   }
   /* USER CODE END 3 */
 }
@@ -266,7 +269,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, PROGRAM_B_Pin|PL_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(PROGRAM_B_GPIO_Port, PROGRAM_B_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(PL_CS_GPIO_Port, PL_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : FFLASH_CS_Pin */
   GPIO_InitStruct.Pin = FFLASH_CS_Pin;
