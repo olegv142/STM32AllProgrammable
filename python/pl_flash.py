@@ -139,11 +139,27 @@ if __name__ == '__main__':
 	import random
 
 	with PLFlash() as dev:
-		if '--erase' in sys.argv:
+		if '--program' in sys.argv:
+			sys.argv.remove('--program')
+			if len(sys.argv) < 2:
+				print 'need filename to program'
+			else:
+				data = open(sys.argv[-1], 'rb').read()
+				print 'erasing ..'
+				assert dev.erase_all()
+				print 'programming %u bytes ..' % len(data)
+				assert dev.program(0, data)
+				print 'verifying ..'
+				rdata = dev.read_content(0, len(data))
+				assert rdata == data
+				print 'done'
+
+		elif '--erase' in sys.argv:
 			if dev.erase_all():
 				print 'chip erased'
 			else:
 				print 'failed to erase'
+
 		elif '--chk-empty' in sys.argv:
 			size = dev.query_size()
 			print 'reading', size, 'bytes ..',
@@ -155,6 +171,7 @@ if __name__ == '__main__':
 					break
 			else:
 				print 'empty'
+
 		elif '--test' in sys.argv:
 			size = dev.query_size()
 			off = random.randrange(0, size / 2)
@@ -172,6 +189,7 @@ if __name__ == '__main__':
 					print '%#0.2x != %#0.2x @%#x' % (ord(c), ord(data[i]), i)
 					break
 			print 'done'
+
 		else:
 			print 'ID =', dev.read_id()
 
