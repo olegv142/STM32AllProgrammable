@@ -1,0 +1,14 @@
+
+###### Global clock ###################
+NET Clk LOC = P8 | TNM_NET = sys_clk_pin | IOSTANDARD = "LVCMOS33";
+TIMESPEC TS_sys_clk_pin = PERIOD sys_clk_pin 50000 kHz;
+##
+
+
+##
+NET nRst    LOC = T6 | IOSTANDARD = "LVCMOS33"; ## Reset Button
+##
+
+######## LED pins #####################
+NET Led<0> LOC = L7 | IOSTANDARD = "LVCMOS33";       ## LED1
+NET Led<1> LOC = L8 | IOSTANDARD = "LVCMOS33";       ## LED2
