@@ -9,8 +9,8 @@ module SPIGate(
     output MISO,
     input  nCS,
     // Internal bus
-    output [15:0] RXD,  // Data received from the host
-    input  [15:0] TXD,  // Data to be transmitted to the host
+    output [7:0]  RXD,  // Data received from the host
+    input  [7:0]  TXD,  // Data to be transmitted to the host
     output [7:0]  ADDR, // Port address received from the host
     output        SEL,  // Port selected. Become active when the the address is valid. Reset after host deselect interface on transfer completion.
     output        TXE,  // Transmit enable. Transmitting port should put data to TXD, it will be latched by gate on second clock edge.
@@ -53,9 +53,9 @@ end
 assign ADDR = address;
 assign SEL  = selected;
 
-reg[15:0] data;
-reg[4:0]  data_bits;
-wire data_valid = data_bits[4];
+reg[7:0]  data;
+reg[3:0]  data_bits;
+wire data_valid = data_bits[3];
 reg  need_data;
 reg  load_data;
 
@@ -65,7 +65,7 @@ begin
         data_bits <= 0;
     end else if (address_valid) begin
         if (sclk_edge) begin
-            data <= {data[14:0], data_in};
+            data <= {data[6:0], data_in};
             data_bits <= data_bits + 1;
         end;
         if (data_valid)
@@ -82,22 +82,22 @@ begin
     end
 end
 
-assign MISO = data[15];
+assign MISO = data[7];
 assign RXD = data;
 assign RXE = data_valid;
 assign TXE = need_data && address_valid;
 
 endmodule
 
-module IOPort(
+module IOPort8(
     // Address
     input  [7:0]  ADDRESS, // Port address
-    input  [15:0] DI,      // Data input
-    output [15:0] DO,      // Data output
+    input  [7:0]  DI,      // Data input
+    output [7:0]  DO,      // Data output
 
     // Internal bus
-    input  [15:0] RXD,  // Data received from the host
-    output [15:0] TXD,  // Data to be transmitted to the host
+    input  [7:0]  RXD,  // Data received from the host
+    output [7:0]  TXD,  // Data to be transmitted to the host
     input  [7:0]  ADDR, // Port address received from the host
     input         TXE,  // Transmit enable. Transmitting port should put data to TXD, it will be latched by gate on second clock edge.
     input         RXE,  // Receive enable. Receiving port should latch RXD on first clock rising edge.
@@ -105,14 +105,55 @@ module IOPort(
     input         CLK
     );
 
-reg [15:0] data_rx;
+reg [7:0] data_rx;
 assign DO = data_rx;
-assign TXD = (TXE && ADDR == ADDRESS) ? DI : 16'bz;
+assign TXD = (TXE && ADDR == ADDRESS) ? DI : 8'bz;
 
 always @(posedge CLK)
 begin
     if (RXE && ADDR == ADDRESS)
         data_rx <= RXD;
+end
+
+endmodule
+
+module IOPort16(
+    // Address
+    input  [7:0]  ADDRESS, // Port address
+    input  [15:0] DI,      // Data input
+    output [15:0] DO,      // Data output
+
+    // Internal bus
+    input  [7:0]  RXD,  // Data received from the host
+    output [7:0]  TXD,  // Data to be transmitted to the host
+    input  [7:0]  ADDR, // Port address received from the host
+    input         SEL,  // Port selected. Become active when the the address is valid. Reset after host deselect interface on transfer completion.
+    input         TXE,  // Transmit enable. Transmitting port should put data to TXD, it will be latched by gate on second clock edge.
+    input         RXE,  // Receive enable. Receiving port should latch RXD on first clock rising edge.
+    // Global clock
+    input         CLK
+    );
+
+reg [15:0] data_rx;
+reg [15:0] data_out;
+assign DO = data_out;
+
+reg hbyte;
+assign TXD = (TXE && ADDR == ADDRESS) ? (!hbyte ? DI[7:0] : DI[15:8]) : 8'bz;
+
+always @(posedge CLK)
+begin
+    if (!SEL) begin
+        hbyte <= 0;
+        data_out <= data_rx;
+    end
+    if (RXE && ADDR == ADDRESS) begin
+        if (!hbyte)
+            data_rx[7:0] <= RXD;
+        else
+            data_rx[15:8] <= RXD;
+        hbyte <= 1;
+    end
 end
 
 endmodule

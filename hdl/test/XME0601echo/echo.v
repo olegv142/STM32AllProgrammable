@@ -30,8 +30,8 @@ module echo(
 	 output [2:0] Dbg
     );
 
-wire [15:0] rxd;
-wire [15:0] txd;
+wire [7:0]  rxd;
+wire [7:0]  txd;
 wire [7:0]  addr;
 wire        sel;
 wire        txe;
@@ -53,12 +53,12 @@ SPIGate gate(
 
 assign Dbg = {rxe, txe, sel};
 
-wire [15:0] p0data;
+wire [7:0] p0data;
 assign Led = ~p0data[1:0];
 
-IOPort port0 (
+IOPort8 port0 (
 	.ADDRESS(8'h0),
-	.DI(16'hdead),
+	.DI(8'hde),
 	.DO(p0data),
 	.RXD(rxd),
 	.TXD(txd),
@@ -68,15 +68,30 @@ IOPort port0 (
 	.CLK(Clk)
 );
 
-wire [15:0] p1data;
+wire [7:0] p1data;
 
-IOPort port1 (
+IOPort8 port1 (
 	.ADDRESS(8'h1),
 	.DI(p1data),
 	.DO(p1data),
 	.RXD(rxd),
 	.TXD(txd),
 	.ADDR(addr),
+	.TXE(txe),
+	.RXE(rxe),
+	.CLK(Clk)
+);
+
+wire [15:0] p2data;
+
+IOPort16 port2 (
+	.ADDRESS(8'h2),
+	.DI(p2data),
+	.DO(p2data),
+	.RXD(rxd),
+	.TXD(txd),
+	.ADDR(addr),
+	.SEL(sel),
 	.TXE(txe),
 	.RXE(rxe),
 	.CLK(Clk)
