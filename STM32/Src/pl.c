@@ -4,8 +4,9 @@
 pl_status_t pl_status = pl_inactive;
 bool volatile pl_enable_ = false;
 
-static inline void pl_flash_cs_init(void)
+static inline void pl_iface_init(void)
 {
+	HAL_SPI_MspInit(&hspi3);
 	HAL_GPIO_WritePin(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin, GPIO_PIN_SET);
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	GPIO_InitStruct.Pin = FFLASH_CS_Pin;
@@ -15,24 +16,23 @@ static inline void pl_flash_cs_init(void)
 	HAL_GPIO_Init(FFLASH_CS_GPIO_Port, &GPIO_InitStruct);
 }
 
-static inline void pl_flash_cs_deinit(void)
+static inline void pl_iface_deinit(void)
 {
 	HAL_GPIO_DeInit(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin);
+	HAL_SPI_MspDeInit(&hspi3);
 }
 
 static void pl_stop(void)
 {
 	HAL_GPIO_WritePin(PROGRAM_B_GPIO_Port, PROGRAM_B_Pin, GPIO_PIN_RESET);
-	if (pl_status != pl_configured)
-		HAL_SPI_MspInit(&hspi3);
-	pl_flash_cs_init();
+	if (pl_status != pl_configured)		
+		pl_iface_init();
 	pl_status = pl_inactive;
 }
 
 static void pl_resume(void)
 {
-	pl_flash_cs_deinit();
-	HAL_SPI_MspDeInit(&hspi3);
+	pl_iface_deinit();
 	HAL_GPIO_WritePin(PROGRAM_B_GPIO_Port, PROGRAM_B_Pin, GPIO_PIN_SET);
 	pl_status = pl_active;
 }
@@ -64,7 +64,7 @@ void pl_process(void)
 	else if (pl_status == pl_active) {
 		if (HAL_GPIO_ReadPin(DONE_GPIO_Port, DONE_Pin) == GPIO_PIN_RESET)
 			return;
-		HAL_SPI_MspInit(&hspi3);
+		pl_iface_init();
 		pl_status = pl_configured;
 	}
 }
