@@ -68,3 +68,24 @@ void pl_process(void)
 		pl_status = pl_configured;
 	}
 }
+
+unsigned pl_tx_errors;
+
+// Perform transaction on SPI channel
+bool pl_tx(uint8_t* buff, unsigned len)
+{
+	if (pl_status != pl_configured) {
+		++pl_tx_errors;
+		return false;
+	}
+	HAL_GPIO_WritePin(PL_CS_GPIO_Port, PL_CS_Pin, GPIO_PIN_RESET);
+	HAL_StatusTypeDef sta = HAL_SPI_TransmitReceive(
+			&hspi3, buff, buff, len, HAL_MAX_DELAY
+		);
+	HAL_GPIO_WritePin(PL_CS_GPIO_Port, PL_CS_Pin, GPIO_PIN_SET);
+	if (sta != HAL_OK) {
+		++pl_tx_errors;
+		return false;
+	}
+	return true;
+}

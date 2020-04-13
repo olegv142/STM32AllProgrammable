@@ -15,6 +15,9 @@
 // PL state control
 #define CMD_ACTIVE "ACTIVE"
 
+// PL data exchange transaction
+#define CMD_TX    "TX"
+
 // PL flash access commands
 #define CMD_FLASH "FLASH"
 #define CMD_RD    "RD"  // Read transaction

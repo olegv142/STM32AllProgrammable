@@ -81,6 +81,7 @@ static void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
 
 // Flash transaction size
 static unsigned tmc_pl_flash_tx_sz;
+// Flash wait timeout
 static unsigned tmc_pl_flash_wait;
 
 static void tmc_pl_flash_tx_handler(void)
@@ -170,6 +171,20 @@ static inline void tmc_pl_report_status(void)
 	tmc_schedule_reply_buff(&resp, 1);
 }
 
+static void tmc_pl_tx_handler(void)
+{
+	if (!pl_tx(USB_TMC_TxDataBuffer(), tmc_reply_len))
+		tmc_reply_len = 0;
+	tmc_ready_to_reply();
+}
+
+static void tmc_pl_tx(uint8_t const* pbuf, unsigned len)
+{
+	memcpy(USB_TMC_TxDataBuffer(), pbuf, len);
+	tmc_reply_len = len;
+	tmc_schedule_handler(tmc_pl_tx_handler);
+}
+
 static void tmc_rx_pl_sub_command(uint8_t const* pbuf, unsigned len)
 {
 	unsigned skip, arg;
@@ -182,6 +197,11 @@ static void tmc_rx_pl_sub_command(uint8_t const* pbuf, unsigned len)
 			pl_enable(arg != 0);
 			return;
 		}
+	}
+
+	if (PREFIX_MATCHED(CMD_TX, pbuf, len)) {
+		tmc_pl_tx(pbuf + STRZ_LEN(CMD_TX), len - STRZ_LEN(CMD_TX));
+		return;
 	}
 
 	if (PREFIX_MATCHED(CMD_FLASH, pbuf, len) && (skip = skip_through(':', pbuf, len))) {

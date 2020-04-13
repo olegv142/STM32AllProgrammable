@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <stdbool.h>
 
 typedef enum {
@@ -19,4 +20,5 @@ void pl_enable(bool en);
 // Check PL status
 void pl_process(void);
 
-
+// Perform transaction on SPI channel
+bool pl_tx(uint8_t* buff, unsigned len);

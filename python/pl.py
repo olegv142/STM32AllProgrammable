@@ -1,9 +1,56 @@
 import pyvisa as pv
+import struct
 import sys
 
-rm = pv.ResourceManager()
-dev = rm.open_resource(rm.list_resources()[0])
+STA_INACTIVE   = 0
+STA_ACTIVE     = 1
+STA_CONFIGURED = 2
 
-dev.write_raw('PL:ACTIVE?')
-print 'status=' + dev.read_raw()
+sta_names = {
+	STA_INACTIVE   : "Inactive",
+	STA_ACTIVE     : "Active",
+	STA_CONFIGURED : "Configured"
+}
+
+def status_name(sta):
+	if sta in sta_names:
+		return sta_names[sta]
+	else:
+		return "Unknown"
+
+def open(res = None):
+	rm = pv.ResourceManager()
+	if not res:
+		res = rm.list_resources()[0]		
+	return rm.open_resource(res)
+
+def get_status(dev):
+	dev.write_raw('PL:ACTIVE?')
+	r = dev.read_raw()
+	assert len(r) == 1
+	return ord(r[0]) - ord('0')
+
+def get_status_name(dev):
+	return status_name(get_status(dev))
+
+def tx(dev, addr, vals):
+	args = [addr]
+	try:
+		args.extend(iter(vals))
+		n = len(vals)
+	except:
+		args.append(vals)
+		n = 1
+	fmt = '!B' + 'H' * n
+	data = struct.pack(fmt, *args)
+	dev.write_raw('PL:TX' + data)
+	r = dev.read_raw()
+	assert len(r) == len(data)
+	res = struct.unpack(fmt, r)
+	assert len(res) == 1 + n
+	return res[1:]
+
+if __name__ == '__main__':
+	dev = open()
+	print 'PL is', get_status_name(dev)
 
