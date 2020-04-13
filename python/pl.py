@@ -33,22 +33,11 @@ def get_status(dev):
 def get_status_name(dev):
 	return status_name(get_status(dev))
 
-def tx(dev, addr, vals):
-	args = [addr]
-	try:
-		args.extend(iter(vals))
-		n = len(vals)
-	except:
-		args.append(vals)
-		n = 1
-	fmt = '!B' + 'H' * n
-	data = struct.pack(fmt, *args)
-	dev.write_raw('PL:TX' + data)
+def tx(dev, addr, data):
+	dev.write_raw('PL:TX' + chr(addr) + data)
 	r = dev.read_raw()
-	assert len(r) == len(data)
-	res = struct.unpack(fmt, r)
-	assert len(res) == 1 + n
-	return res[1:]
+	assert len(r) == 1 + len(data)
+	return r[1:]
 
 if __name__ == '__main__':
 	dev = open()
