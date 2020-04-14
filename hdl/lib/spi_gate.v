@@ -19,14 +19,22 @@ module SPIGate(
     input         CLK
     );
 
+parameter CS_FLT_TAPS = 3;
+
+reg [CS_FLT_TAPS-1:0] cs_flt;
 reg cs_in;
+
 reg sclk_in;
 reg data_in;
 reg last_sclk;
 
 always @(posedge CLK)
 begin
-    cs_in <= ~nCS;
+    cs_flt <= {cs_flt[CS_FLT_TAPS-2:0], ~nCS};
+    if (cs_flt == 'b1)
+        cs_in <= 1;
+    if (cs_flt == 'b0)
+        cs_in <= 0;
     sclk_in <= SCLK;
     data_in <= MOSI;
     last_sclk <= sclk_in;
@@ -37,7 +45,6 @@ wire sclk_edge = sclk_in && sclk_in != last_sclk;
 reg[7:0] address;
 reg[3:0] address_bits;
 wire     address_valid = address_bits[3];
-reg      selected;
 
 always @(posedge CLK)
 begin
@@ -47,27 +54,30 @@ begin
         address <= {address[6:0], data_in};
         address_bits <= address_bits + 1;
     end;
-    selected <= address_valid;
 end
 
 assign ADDR = address;
-assign SEL  = selected;
 
 reg[7:0]  data;
 reg[3:0]  data_bits;
 wire data_valid = data_bits[3];
 reg  need_data;
 reg  load_data;
+reg  selected;
 
 always @(posedge CLK)
 begin
     if (!cs_in) begin
         data_bits <= 0;
+        need_data <= 0;
+        load_data <= 0;
+        selected  <= 0;
     end else if (address_valid) begin
         if (sclk_edge) begin
             data <= {data[6:0], data_in};
             data_bits <= data_bits + 1;
         end;
+        selected <= 1;
         if (data_valid)
             data_bits <= 0;
         if (!selected || data_valid)
@@ -83,9 +93,10 @@ begin
 end
 
 assign MISO = data[7];
-assign RXD = data;
-assign RXE = data_valid;
-assign TXE = need_data && address_valid;
+assign SEL  = selected;
+assign RXD  = data;
+assign RXE  = data_valid;
+assign TXE  = need_data;
 
 endmodule
 

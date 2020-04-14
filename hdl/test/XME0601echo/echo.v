@@ -26,8 +26,8 @@ module echo(
     input nCS,
     input Clk,
 	 
-	 output [1:0] Led,
-	 output [2:0] Dbg
+    output [1:0] Led,
+    output [2:0] Dbg
     );
 
 wire [7:0]  rxd;
