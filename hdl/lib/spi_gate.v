@@ -100,7 +100,12 @@ assign TXE  = need_data;
 
 endmodule
 
-module IOPort8(
+module IOPort8
+    #(
+        // If set to 1 the output will only be active for single clock period. After that it will be set to all 0s.
+        parameter  ONE_SHOT = 0
+    )
+    (
     // Address
     input  [7:0]  ADDRESS, // Port address
     input  [7:0]  DI,      // Data input
@@ -127,6 +132,8 @@ assign STRB = strobe;
 always @(posedge CLK)
 begin
     strobe <= 0;
+    if (ONE_SHOT)
+        data_rx <= 'b0;
     if (RXE && ADDR == ADDRESS) begin
         data_rx <= RXD;
         strobe <= 1;
@@ -135,7 +142,12 @@ end
 
 endmodule
 
-module IOPort16(
+module IOPort16
+    #(
+        // If set to 1 the output will only be active for single clock period. After that it will be set to all 0s.
+        parameter  ONE_SHOT = 0
+    )
+    (
     // Address
     input  [7:0]  ADDRESS, // Port address
     input  [15:0] DI,      // Data input
@@ -166,7 +178,9 @@ assign TXD = (TXE && ADDR == ADDRESS) ? (!hbyte ? DI[7:0] : DI[15:8]) : 8'bz;
 always @(posedge CLK)
 begin
     strobe <= 0;
-    if (!SEL) begin
+    if (ONE_SHOT)
+        data_out <= 'b0;
+    if (!SEL && hbyte) begin
         hbyte <= 0;
         data_out <= data_rx;
     end
