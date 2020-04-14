@@ -105,6 +105,7 @@ module IOPort8(
     input  [7:0]  ADDRESS, // Port address
     input  [7:0]  DI,      // Data input
     output [7:0]  DO,      // Data output
+    output        STRB,    // Strobe - becomes active for one clock period whenever DO is updated
 
     // Internal bus
     input  [7:0]  RXD,  // Data received from the host
@@ -120,10 +121,16 @@ reg [7:0] data_rx;
 assign DO = data_rx;
 assign TXD = (TXE && ADDR == ADDRESS) ? DI : 8'bz;
 
+reg strobe;
+assign STRB = strobe;
+
 always @(posedge CLK)
 begin
-    if (RXE && ADDR == ADDRESS)
+    strobe <= 0;
+    if (RXE && ADDR == ADDRESS) begin
         data_rx <= RXD;
+        strobe <= 1;
+    end
 end
 
 endmodule
@@ -133,6 +140,7 @@ module IOPort16(
     input  [7:0]  ADDRESS, // Port address
     input  [15:0] DI,      // Data input
     output [15:0] DO,      // Data output
+    output        STRB,    // Strobe - becomes active for one clock period whenever DO is updated
 
     // Internal bus
     input  [7:0]  RXD,  // Data received from the host
@@ -149,11 +157,15 @@ reg [15:0] data_rx;
 reg [15:0] data_out;
 assign DO = data_out;
 
+reg strobe;
+assign STRB = strobe;
+
 reg hbyte;
 assign TXD = (TXE && ADDR == ADDRESS) ? (!hbyte ? DI[7:0] : DI[15:8]) : 8'bz;
 
 always @(posedge CLK)
 begin
+    strobe <= 0;
     if (!SEL) begin
         hbyte <= 0;
         data_out <= data_rx;
@@ -163,6 +175,7 @@ begin
             data_rx[7:0] <= RXD;
         else
             data_rx[15:8] <= RXD;
+        strobe <= 1;
         hbyte <= 1;
     end
 end
