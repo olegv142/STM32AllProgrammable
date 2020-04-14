@@ -26,8 +26,7 @@ module echo(
     input nCS,
     input Clk,
 	 
-    output [1:0] Led,
-    output [2:0] Dbg
+    output [1:0] Led
     );
 
 wire [7:0]  rxd;
@@ -50,8 +49,6 @@ SPIGate gate(
 	.RXE(rxe),
 	.CLK(Clk)
 );
-
-assign Dbg = {rxe, txe, sel};
 
 wire [7:0] p0data;
 assign Led = ~p0data[1:0];

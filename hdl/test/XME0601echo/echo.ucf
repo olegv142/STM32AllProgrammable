@@ -19,6 +19,3 @@ NET nCS  LOC = R12 | IOSTANDARD = "LVCMOS33";
 NET Led<0> LOC = L7 | IOSTANDARD = "LVCMOS33";       ## LED1
 NET Led<1> LOC = L8 | IOSTANDARD = "LVCMOS33";       ## LED2
 
-NET Dbg<0> LOC = R15 | IOSTANDARD = "LVCMOS33";      ## Debug output
-NET Dbg<1> LOC = L12 | IOSTANDARD = "LVCMOS33";      ## Debug output
-NET Dbg<2> LOC = P15 | IOSTANDARD = "LVCMOS33";      ## Debug output
