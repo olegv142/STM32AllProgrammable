@@ -89,3 +89,32 @@ bool pl_tx(uint8_t* buff, unsigned len)
 	}
 	return true;
 }
+
+bool pl_start_pull(uint8_t* buff, unsigned len)
+{
+	unsigned tx_len = (len + 3) / 4; // in 32 bit words
+	HAL_DCMI_Stop(&hdcmi);
+	if (HAL_OK != HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_SNAPSHOT, (uint32_t)buff, tx_len)) {
+		++pl_tx_errors;
+		return false;
+	}
+	return true;
+}
+
+pl_pull_status_t pl_get_pull_status(void)
+{
+	switch (HAL_DCMI_GetState(&hdcmi)) {
+	case HAL_DCMI_STATE_READY:
+		return pl_pull_ready;
+	case HAL_DCMI_STATE_BUSY:
+		return pl_pull_busy;
+	default:
+		return pl_pull_failed;
+	}
+}
+
+void pl_stop_pull(void)
+{
+	HAL_DCMI_Stop(&hdcmi);
+}
+

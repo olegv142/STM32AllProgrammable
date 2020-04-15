@@ -70,6 +70,7 @@ void Error_Handler(void);
 #define PL_SRQ_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
 extern SPI_HandleTypeDef hspi3;
+extern DCMI_HandleTypeDef hdcmi;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
