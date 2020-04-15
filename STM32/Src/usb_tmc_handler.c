@@ -75,7 +75,7 @@ static void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
 		tmc_schedule_handler(tmc_idn_handler);
 		return;
 	}
-	// unhanded command
+	// unhandled command
 	++tmc_wr_ignored;
 }
 
@@ -112,7 +112,7 @@ static void tmc_pl_flash_prog_handler(void)
 static void tmc_pl_flash_tx(uint8_t const* pbuf, unsigned len, unsigned rd_len, bool rd_reply)
 {
 	if (rd_reply && len + rd_len > USB_TMC_TX_MAX_DATA_SZ) {
-		// unhanded command
+		// unhandled command
 		++tmc_wr_ignored;
 		return;
 	}
@@ -161,7 +161,7 @@ static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 		tmc_pl_flash_prog(pbuf + skip + skip_arg + 1, len - skip - skip_arg - 1, arg);
 		return;
 	}
-	// unhanded command
+	// unhandled command
 	++tmc_wr_ignored;
 }
 
@@ -185,9 +185,62 @@ static void tmc_pl_tx(uint8_t const* pbuf, unsigned len)
 	tmc_schedule_handler(tmc_pl_tx_handler);
 }
 
+unsigned tmc_pull_data_len;
+unsigned tmc_pull_req_len;
+
+static void pl_pull_done(bool success)
+{
+	if (!success) {
+		pl_stop_pull();
+		tmc_reply_len = 0;
+	}
+	tmc_ready_to_reply();
+}
+
+static void tmc_pl_pull_complete_handler(void)
+{
+	pl_pull_status_t sta = pl_get_pull_status();
+	if (sta == pl_pull_busy)
+		return;
+	pl_pull_done(sta == pl_pull_ready);
+}
+
+static void tmc_pl_pull_handler(void)
+{
+	uint8_t* buff = USB_TMC_TxDataBuffer();
+	unsigned align = 3 & (unsigned)(buff + tmc_pull_req_len);
+	if (align)
+		align = 4 - align;
+	tmc_reply_len = tmc_pull_req_len + align + tmc_pull_data_len;
+	if (!pl_start_pull(buff + tmc_pull_req_len + align, tmc_pull_data_len)) {
+		tmc_reply_len = 0;
+		tmc_ready_to_reply();
+		return;
+	}
+	if (!pl_tx(buff, tmc_pull_req_len)) {
+		pl_pull_done(false);
+		return;
+	}
+	tmc_schedule_handler(tmc_pl_pull_complete_handler);
+}
+
+static void tmc_pl_pull(uint8_t const* pbuf, unsigned len, unsigned pull_len)
+{
+	// Make sure data fit in the buffer even taking alignment into account
+	if (len + pull_len + 6 > USB_TMC_TX_MAX_DATA_SZ) {
+		// unhandled command
+		++tmc_wr_ignored;
+		return;
+	}
+	memcpy(USB_TMC_TxDataBuffer(), pbuf, len);
+	tmc_pull_req_len = len;
+	tmc_pull_data_len = pull_len;
+	tmc_schedule_handler(tmc_pl_pull_handler);
+}
+
 static void tmc_rx_pl_sub_command(uint8_t const* pbuf, unsigned len)
 {
-	unsigned skip, arg;
+	unsigned skip, skip_arg, arg;
 	if (PREFIX_MATCHED(CMD_ACTIVE, pbuf, len)) {
 		if (len > STRZ_LEN(CMD_ACTIVE) && pbuf[STRZ_LEN(CMD_ACTIVE)] == '?') {
 			tmc_pl_report_status();
@@ -204,11 +257,20 @@ static void tmc_rx_pl_sub_command(uint8_t const* pbuf, unsigned len)
 		return;
 	}
 
+	if (PREFIX_MATCHED(CMD_PULL, pbuf, len)
+		&& (skip = skip_through('#', pbuf, len))
+		&& (skip_arg = scan_u(pbuf + skip, len - skip, &arg))
+		&& len > skip + skip_arg && pbuf[skip + skip_arg] == '#'
+	) {
+		tmc_pl_pull(pbuf + skip + skip_arg + 1, len - skip - skip_arg - 1, arg);
+		return;
+	}
+
 	if (PREFIX_MATCHED(CMD_FLASH, pbuf, len) && (skip = skip_through(':', pbuf, len))) {
 		tmc_rx_pl_flash_sub_command(pbuf + skip, len - skip);
 		return;
 	}
-	// unhanded command
+	// unhandled command
 	++tmc_wr_ignored;
 }
 
@@ -225,7 +287,7 @@ static void tmc_rx_test_sub_command(uint8_t const* pbuf, unsigned len)
 		tmc_rx_test_echo(pbuf + STRZ_LEN(CMD_ECHO), len - STRZ_LEN(CMD_ECHO));
 		return;
 	}
-	// unhanded command
+	// unhandled command
 	++tmc_wr_ignored;
 }
 
@@ -240,7 +302,7 @@ static void tmc_rx_dev_command(uint8_t const* pbuf, unsigned len)
 		tmc_rx_test_sub_command(pbuf + skip, len - skip);
 		return;
 	}
-	// unhanded command
+	// unhandled command
 	++tmc_wr_ignored;
 }
 

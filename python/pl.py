@@ -39,6 +39,14 @@ def tx(dev, addr, data):
 	assert len(r) == 1 + len(data)
 	return r[1:]
 
+def pull_raw(dev, addr, cmd, pull_len):
+	dev.write_raw('PL:PULL #H%X#' % pull_len + chr(addr) + cmd)
+	return dev.read_raw()
+
+def pull(dev, addr, cmd, pull_len):
+	r = pull_raw(dev, addr, cmd, pull_len)
+	return r[-pull_len:]
+
 if __name__ == '__main__':
 	dev = open()
 	print 'PL is', get_status_name(dev)
