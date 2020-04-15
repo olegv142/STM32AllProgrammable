@@ -30,6 +30,7 @@ bool     tmc_reply_req;
 unsigned tmc_reply_len;
 unsigned tmc_reply_max_len;
 uint8_t  tmc_reply_tag;
+unsigned tmc_reply_cnt;
 tmc_handler_t tmc_handler;
 
 static inline void tmc_ready_to_reply(void)
@@ -200,8 +201,10 @@ static void pl_pull_done(bool success)
 static void tmc_pl_pull_complete_handler(void)
 {
 	pl_pull_status_t sta = pl_get_pull_status();
-	if (sta == pl_pull_busy)
+	if (sta == pl_pull_busy) {
+        tmc_schedule_handler(tmc_pl_pull_complete_handler);
 		return;
+    }
 	pl_pull_done(sta == pl_pull_ready);
 }
 
@@ -339,6 +342,7 @@ static void tmc_reply(void)
 	tmc_reply_req = false;
 	tmc_pending = false;
 	USB_TMC_Reply(len, tmc_reply_tag);
+	++tmc_reply_cnt;
 }
 
 void USB_TMC_RequestResponse(uint8_t tag, unsigned max_len)
