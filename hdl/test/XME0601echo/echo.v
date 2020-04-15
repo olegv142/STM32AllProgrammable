@@ -20,12 +20,18 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module echo(
+    // SPI slave interface
     input SCLK,
     input MOSI,
     output MISO,
     input nCS,
+    // DCMI master interface
+    output [7:0] DATA,
+    output       DSYNC,
+    output       DCLK,
+    // Global clock
     input Clk,
-	 
+    // On board LEDs
     output [1:0] Led
     );
 
@@ -92,6 +98,30 @@ IOPort16 port2 (
 	.TXE(txe),
 	.RXE(rxe),
 	.CLK(Clk)
+);
+
+wire [7:0] p3data;
+
+IOPort8 #(.ONE_SHOT(1)) port3 (
+	.ADDRESS(8'h3),
+	.DI(8'hdc),
+	.DO(p3data),
+	.RXD(rxd),
+	.TXD(txd),
+	.ADDR(addr),
+	.TXE(txe),
+	.RXE(rxe),
+	.CLK(Clk)
+);
+
+wire dcmi_start = p3data[0];
+
+DCMITest dcmi_test (
+    .START(dcmi_start),
+    .DATA(DATA),
+    .DSYNC(DSYNC),
+    .DCLK(DCLK),
+    .Clk(Clk)
 );
 
 endmodule
