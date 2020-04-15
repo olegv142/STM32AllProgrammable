@@ -229,8 +229,9 @@ static void tmc_pl_pull_handler(void)
 
 static void tmc_pl_pull(uint8_t const* pbuf, unsigned len, unsigned pull_len)
 {
+	pull_len *= 4; // It is specified in 32 bit words
 	// Make sure data fit in the buffer even taking alignment into account
-	if (len + pull_len + 6 > USB_TMC_TX_MAX_DATA_SZ) {
+	if (len + 3 + pull_len > USB_TMC_TX_MAX_DATA_SZ) {
 		// unhandled command
 		++tmc_wr_ignored;
 		return;

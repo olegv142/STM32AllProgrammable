@@ -39,13 +39,13 @@ def tx(dev, addr, data):
 	assert len(r) == 1 + len(data)
 	return r[1:]
 
-def pull_raw(dev, addr, cmd, pull_len):
-	dev.write_raw('PL:PULL #H%X#' % pull_len + chr(addr) + cmd)
+def pull_raw(dev, addr, cmd, frame_words):
+	dev.write_raw('PL:PULL #H%X#' % frame_words + chr(addr) + cmd)
 	return dev.read_raw()
 
-def pull(dev, addr, cmd, pull_len):
-	r = pull_raw(dev, addr, cmd, pull_len)
-	return r[-pull_len:]
+def pull(dev, addr, cmd, frame_words):
+	r = pull_raw(dev, addr, cmd, frame_words)
+	return r[-frame_words*4:]
 
 if __name__ == '__main__':
 	dev = open()
