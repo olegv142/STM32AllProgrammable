@@ -21,9 +21,11 @@ To cope with transferring large amounts of data the USB interface utilizes high 
 
 ![The core component interconnections](https://github.com/olegv142/STM32AllProgrammable/blob/master/doc/schematic.png)
 
-## The application level protocol commands
+## The application level API
 
-## FAQ
+## FPGA firmware loading
+
+## FPGA test projects
 
 ## Author
 
