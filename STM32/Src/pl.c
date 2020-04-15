@@ -92,6 +92,10 @@ bool pl_tx(uint8_t* buff, unsigned len)
 
 bool pl_start_pull(uint8_t* buff, unsigned len)
 {
+	if (HAL_DCMI_GetState(&hdcmi) != HAL_DCMI_STATE_READY) {
+		HAL_DCMI_Stop(&hdcmi);
+		++pl_tx_errors;
+	}
 	// The length must be the integral number of 32 bit words
 	// In theory it should work with any frame length but in practice it does not
 	if (len % 4 || HAL_OK != HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_SNAPSHOT, (uint32_t)buff, len / 4)) {
