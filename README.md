@@ -25,7 +25,7 @@ To cope with transferring large amounts of data the USB interface utilizes high 
 
 ## FPGA firmware loading
 
-## FPGA test projects
+## FPGA API and test projects
 
 ## Author
 
