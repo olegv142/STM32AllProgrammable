@@ -66,6 +66,7 @@ IOPort8 port0 (
 	.RXD(rxd),
 	.TXD(txd),
 	.ADDR(addr),
+	.SEL(sel),
 	.TXE(txe),
 	.RXE(rxe),
 	.CLK(Clk)
@@ -80,6 +81,7 @@ IOPort8 port1 (
 	.RXD(rxd),
 	.TXD(txd),
 	.ADDR(addr),
+	.SEL(sel),
 	.TXE(txe),
 	.RXE(rxe),
 	.CLK(Clk)
@@ -100,6 +102,7 @@ IOPort16 port2 (
 	.CLK(Clk)
 );
 
+/*
 wire [7:0] p3data;
 
 IOPort8 #(.ONE_SHOT(1)) port3 (
@@ -109,6 +112,7 @@ IOPort8 #(.ONE_SHOT(1)) port3 (
 	.RXD(rxd),
 	.TXD(txd),
 	.ADDR(addr),
+	.SEL(sel),
 	.TXE(txe),
 	.RXE(rxe),
 	.CLK(Clk)
@@ -116,12 +120,44 @@ IOPort8 #(.ONE_SHOT(1)) port3 (
 
 wire dcmi_start = p3data[0];
 
-DCMITest dcmi_test (
+DCMITester dcmi_test (
     .START(dcmi_start),
     .DATA(DATA),
     .DSYNC(DSYNC),
     .DCLK(DCLK),
     .Clk(Clk)
 );
+*/
+
+wire [7:0] p4data;
+wire p4strobe;
+wire p4start;
+
+IOPort8 port4 (
+	.ADDRESS(8'h4),
+	.DI(8'hdc),
+	.DO(p4data),
+    .STRB(p4strobe),
+    .STRT(p4start),
+    .DONE(p4done),
+	.RXD(rxd),
+	.TXD(txd),
+	.ADDR(addr),
+	.SEL(sel),
+	.TXE(txe),
+	.RXE(rxe),
+	.CLK(Clk)
+);
+
+DCMITransmitter dcmi_tx (
+    .DI(p4data),
+    .WR(p4strobe),
+    .RST(p4start),
+    .START(p4done),
+    .DATA(DATA),
+    .DSYNC(DSYNC),
+    .DCLK(DCLK),
+    .Clk(Clk)
+    );
 
 endmodule

@@ -110,12 +110,15 @@ module IOPort8
     input  [7:0]  ADDRESS, // Port address
     input  [7:0]  DI,      // Data input
     output [7:0]  DO,      // Data output
-    output        STRB,    // Strobe - becomes active for one clock period whenever DO is updated
+    output        STRB,    // Data strobe - becomes active for one clock period whenever DO is updated
+    output        STRT,    // Frame start strobe - becomes active for one clock period whenever port is selected
+    output        DONE,    // Frame done strobe - becomes active for one clock period whenever port is deselected
 
     // Internal bus
     input  [7:0]  RXD,  // Data received from the host
     output [7:0]  TXD,  // Data to be transmitted to the host
     input  [7:0]  ADDR, // Port address received from the host
+    input         SEL,  // Port selected. Become active when the the address is valid. Reset after host deselect interface on transfer completion.
     input         TXE,  // Transmit enable. Transmitting port should put data to TXD, it will be latched by gate on second clock edge.
     input         RXE,  // Receive enable. Receiving port should latch RXD on first clock rising edge.
     // Global clock
@@ -129,8 +132,13 @@ assign TXD = (TXE && ADDR == ADDRESS) ? DI : 8'bz;
 reg strobe;
 assign STRB = strobe;
 
+reg selected;
+assign STRT = SEL & ~selected;
+assign DONE = ~SEL && selected;
+
 always @(posedge CLK)
 begin
+    selected <= SEL;
     strobe <= 0;
     if (ONE_SHOT)
         data_rx <= 'b0;
