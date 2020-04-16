@@ -67,6 +67,12 @@ void pl_process(void)
 		pl_iface_init();
 		pl_status = pl_configured;
 	}
+	else if (pl_status == pl_configured) {
+		if (HAL_GPIO_ReadPin(DONE_GPIO_Port, DONE_Pin) == GPIO_PIN_SET)
+			return;
+		// FPGA reset itself unexpectedly
+		pl_stop();
+	}
 }
 
 unsigned pl_tx_errors;
