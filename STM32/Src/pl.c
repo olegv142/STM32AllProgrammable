@@ -1,9 +1,13 @@
 #include "pl.h"
 #include "main.h"
 
+// The current PL status
 pl_status_t pl_status = pl_inactive;
+
+// Target PL status. May be set from ISR context and processed later.
 bool volatile pl_enable_ = false;
 
+// Initialize SPI interface to PL
 static inline void pl_iface_init(void)
 {
 	HAL_SPI_MspInit(&hspi3);
@@ -16,12 +20,14 @@ static inline void pl_iface_init(void)
 	HAL_GPIO_Init(FFLASH_CS_GPIO_Port, &GPIO_InitStruct);
 }
 
+// De-initialize SPI interface to PL
 static inline void pl_iface_deinit(void)
 {
 	HAL_GPIO_DeInit(FFLASH_CS_GPIO_Port, FFLASH_CS_Pin);
 	HAL_SPI_MspDeInit(&hspi3);
 }
 
+// Reset PL by turning PROGRAM_B low
 static void pl_stop(void)
 {
 	HAL_GPIO_WritePin(PROGRAM_B_GPIO_Port, PROGRAM_B_Pin, GPIO_PIN_RESET);
@@ -30,6 +36,7 @@ static void pl_stop(void)
 	pl_status = pl_inactive;
 }
 
+// Resume PL by turning PROGRAM_B high
 static void pl_resume(void)
 {
 	pl_iface_deinit();
@@ -44,13 +51,14 @@ void pl_start(void)
 	pl_resume();
 }
 
-// Enable / disable PL
+// Enable / disable PL. May be called from ISR context.
+// The actual status switch will be performed within pl_process() call.
 void pl_enable(bool en)
 {
 	pl_enable_ = en;
 }
 
-// Check PL status
+// Check PL status. Called periodically in the main() loop.
 void pl_process(void)
 {
 	bool is_active = (pl_status != pl_inactive);
@@ -75,6 +83,7 @@ void pl_process(void)
 	}
 }
 
+// Error counter for debugging
 unsigned pl_tx_errors;
 
 // Perform transaction on SPI channel
@@ -96,6 +105,7 @@ bool pl_tx(uint8_t* buff, unsigned len)
 	return true;
 }
 
+// Start waiting for the DCMI data frame
 bool pl_start_pull(uint8_t* buff, unsigned len)
 {
 	if (HAL_DCMI_GetState(&hdcmi) != HAL_DCMI_STATE_READY) {
@@ -111,6 +121,7 @@ bool pl_start_pull(uint8_t* buff, unsigned len)
 	return true;
 }
 
+// Get DCMI data frame reception status
 pl_pull_status_t pl_get_pull_status(void)
 {
 	switch (HAL_DCMI_GetState(&hdcmi)) {
@@ -123,6 +134,7 @@ pl_pull_status_t pl_get_pull_status(void)
 	}
 }
 
+// Stop waiting for the DCMI data frame
 void pl_stop_pull(void)
 {
 	HAL_DCMI_Stop(&hdcmi);

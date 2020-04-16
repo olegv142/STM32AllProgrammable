@@ -14,6 +14,7 @@
 static char idn_buff[] = IDN_VENDOR_PRODUCT "****************," VERSION;
 static const char* idn_ptr;
 
+// Initialize device identification string
 static void idn_init(void)
 {
 	char* sn_buff = idn_buff + STRZ_LEN(IDN_VENDOR_PRODUCT);
@@ -22,15 +23,21 @@ static void idn_init(void)
 	idn_ptr = idn_buff;
 }
 
-typedef void (*tmc_handler_t)(void);
+//
+// TMC request context
+//
+bool     tmc_pending;      // have pending request
+bool     tmc_reply_rdy;    // ready to reply
+bool     tmc_reply_req;    // reply requested
+unsigned tmc_reply_len;    // the reply length in bytes
+unsigned tmc_reply_max_len;// the maximum reply length reported by host
+uint8_t  tmc_reply_tag;    // the reply tag received in host message
+unsigned tmc_reply_cnt;    // total number of replies so far
 
-bool     tmc_pending;
-bool     tmc_reply_rdy;
-bool     tmc_reply_req;
-unsigned tmc_reply_len;
-unsigned tmc_reply_max_len;
-uint8_t  tmc_reply_tag;
-unsigned tmc_reply_cnt;
+// The asynchronous processing handler
+// Will be called in the main loop context
+// We need it since USB messages are delivered in ISR context
+typedef void (*tmc_handler_t)(void);
 tmc_handler_t tmc_handler;
 
 static inline void tmc_ready_to_reply(void)
@@ -57,6 +64,7 @@ static inline void tmc_schedule_handler(tmc_handler_t h)
 	tmc_handler = h;
 }
 
+// *IDN? async handler
 static void tmc_idn_handler(void)
 {
 	if (!idn_ptr)
@@ -70,6 +78,7 @@ unsigned tmc_rd_empty;
 unsigned tmc_rd_truncated;
 unsigned tmc_overrun;
 
+// Standard commands handler
 static void tmc_rx_std_command(uint8_t const* pbuf, unsigned len)
 {
 	if (PREFIX_MATCHED(CMD_IDN, pbuf, len)) {
@@ -85,18 +94,21 @@ static unsigned tmc_pl_flash_tx_sz;
 // Flash wait timeout
 static unsigned tmc_pl_flash_wait;
 
+// FLASH:RD/WR async handler
 static void tmc_pl_flash_tx_handler(void)
 {
 	pl_flash_tx(USB_TMC_TxDataBuffer(), tmc_pl_flash_tx_sz);
 	tmc_ready_to_reply();
 }
 
+// FLASH:WAit async handler
 static void tmc_pl_flash_wait_handler(void)
 {
 	USB_TMC_TxDataBuffer()[0] = pl_flash_wait(tmc_pl_flash_wait);
 	tmc_schedule_reply(1);
 }
 
+// FLASH:PRog async handler
 static void tmc_pl_flash_prog_handler(void)
 {
 	uint8_t wr_en_cmd = 0x06;
@@ -110,6 +122,7 @@ static void tmc_pl_flash_prog_handler(void)
 	tmc_schedule_reply(1);
 }
 
+// FLASH:RD/WR command handler
 static void tmc_pl_flash_tx(uint8_t const* pbuf, unsigned len, unsigned rd_len, bool rd_reply)
 {
 	if (rd_reply && len + rd_len > USB_TMC_TX_MAX_DATA_SZ) {
@@ -123,6 +136,7 @@ static void tmc_pl_flash_tx(uint8_t const* pbuf, unsigned len, unsigned rd_len, 
 	tmc_schedule_handler(tmc_pl_flash_tx_handler);
 }
 
+// FLASH:PRog command handler
 static void tmc_pl_flash_prog(uint8_t const* pbuf, unsigned len, unsigned wait)
 {
 	memcpy(USB_TMC_TxDataBuffer(), pbuf, len);
@@ -131,6 +145,7 @@ static void tmc_pl_flash_prog(uint8_t const* pbuf, unsigned len, unsigned wait)
 	tmc_schedule_handler(tmc_pl_flash_prog_handler);
 }
 
+// PL:FLASH commands handler
 static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 {
 	if (pl_status != pl_inactive) {
@@ -171,12 +186,14 @@ static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 	++tmc_wr_ignored;
 }
 
+// PL:ACTIVE? async handler
 static inline void tmc_pl_report_status(void)
 {
 	uint8_t resp = '0' + pl_status;
 	tmc_schedule_reply_buff(&resp, 1);
 }
 
+// PL:TX async handler
 static void tmc_pl_tx_handler(void)
 {
 	if (!pl_tx(USB_TMC_TxDataBuffer(), tmc_reply_len))
@@ -184,6 +201,7 @@ static void tmc_pl_tx_handler(void)
 	tmc_ready_to_reply();
 }
 
+// PL:TX command handler
 static void tmc_pl_tx(uint8_t const* pbuf, unsigned len)
 {
 	memcpy(USB_TMC_TxDataBuffer(), pbuf, len);
@@ -191,6 +209,7 @@ static void tmc_pl_tx(uint8_t const* pbuf, unsigned len)
 	tmc_schedule_handler(tmc_pl_tx_handler);
 }
 
+// DCMI data pull request parameters
 unsigned tmc_pull_data_len;
 unsigned tmc_pull_req_len;
 
@@ -203,16 +222,18 @@ static void pl_pull_done(bool success)
 	tmc_ready_to_reply();
 }
 
+// PL:PULL async completion handler
 static void tmc_pl_pull_complete_handler(void)
 {
 	pl_pull_status_t sta = pl_get_pull_status();
 	if (sta == pl_pull_busy) {
-        tmc_schedule_handler(tmc_pl_pull_complete_handler);
+		tmc_schedule_handler(tmc_pl_pull_complete_handler);
 		return;
-    }
+	}
 	pl_pull_done(sta == pl_pull_ready);
 }
 
+// PL:PULL async handler
 static void tmc_pl_pull_handler(void)
 {
 	uint8_t* buff = USB_TMC_TxDataBuffer();
@@ -232,6 +253,7 @@ static void tmc_pl_pull_handler(void)
 	tmc_schedule_handler(tmc_pl_pull_complete_handler);
 }
 
+// PL:PULL command handler
 static void tmc_pl_pull(uint8_t const* pbuf, unsigned len, unsigned pull_len)
 {
 	pull_len *= 4; // It is specified in 32 bit words
@@ -247,6 +269,7 @@ static void tmc_pl_pull(uint8_t const* pbuf, unsigned len, unsigned pull_len)
 	tmc_schedule_handler(tmc_pl_pull_handler);
 }
 
+// PL commands handler
 static void tmc_rx_pl_sub_command(uint8_t const* pbuf, unsigned len)
 {
 	unsigned skip, skip_arg, arg;
@@ -283,6 +306,7 @@ static void tmc_rx_pl_sub_command(uint8_t const* pbuf, unsigned len)
 	++tmc_wr_ignored;
 }
 
+// TEST:ECHO command handler
 static void tmc_rx_test_echo(uint8_t const* pbuf, unsigned len)
 {
 	if (len > USB_TMC_TX_MAX_DATA_SZ)
@@ -290,6 +314,7 @@ static void tmc_rx_test_echo(uint8_t const* pbuf, unsigned len)
 	tmc_schedule_reply_buff(pbuf, len);
 }
 
+// TEST commands handler
 static void tmc_rx_test_sub_command(uint8_t const* pbuf, unsigned len)
 {
 	if (PREFIX_MATCHED(CMD_ECHO, pbuf, len)) {
@@ -300,6 +325,7 @@ static void tmc_rx_test_sub_command(uint8_t const* pbuf, unsigned len)
 	++tmc_wr_ignored;
 }
 
+// Device-specific commands handler
 static void tmc_rx_dev_command(uint8_t const* pbuf, unsigned len)
 {
 	unsigned skip;
@@ -315,6 +341,7 @@ static void tmc_rx_dev_command(uint8_t const* pbuf, unsigned len)
 	++tmc_wr_ignored;
 }
 
+// Handle message received over USB. Called in USB ISR context.
 void USB_TMC_Receive(uint8_t const* pbuf, unsigned len)
 {
 	if (tmc_pending) {
@@ -337,6 +364,7 @@ void USB_TMC_Receive(uint8_t const* pbuf, unsigned len)
 	tmc_rx_dev_command(pbuf, len);
 }
 
+// Send reply over USB
 static void tmc_reply(void)
 {
 	unsigned len = tmc_reply_len;
@@ -351,6 +379,7 @@ static void tmc_reply(void)
 	++tmc_reply_cnt;
 }
 
+// Input response requested. Called from USB ISR context.
 void USB_TMC_RequestResponse(uint8_t tag, unsigned max_len)
 {
 	if (!tmc_pending) {
@@ -363,7 +392,8 @@ void USB_TMC_RequestResponse(uint8_t tag, unsigned max_len)
 	tmc_reply_req = true;
 }
 
-// Asynchronous processing (in non-ISR context)
+// Asynchronous processing routine.
+// Called periodically in main() loop.
 void USB_TMC_Process(void)
 {
 	tmc_handler_t h = tmc_handler;
@@ -377,6 +407,9 @@ void USB_TMC_Process(void)
 
 extern uint8_t USBD_HS_DeviceDesc[];
 
+// Initialize device data
+// The TMC implemented as patched CDC auto-generated by CubeMX.
+// This function applies patches to device descriptor that cannot be applied to the auto-generated source.
 void USB_TMC_init(void)
 {
 	USBD_HS_DeviceDesc[3] = 0x00; /*bDeviceClass: This is an Interface Class Defined Device*/
