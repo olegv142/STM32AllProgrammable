@@ -71,6 +71,9 @@ The SPI communication channel at the FPGA side is managed by the set of modules 
 
 The DCMI interface implementation is rather straightforward so its hard to implement anything reusable for that. The XME0601echo project implements echo port saving data received via SPI to buffer memory and echoing it back via DCMI interface. See hdl/test/XME0601echo/echo.v and dcmi_test.v for the details. The latter may serve as a good starting point for implementing your own DCMI transmitter.
 
+## CubeMX code generation remarks
+CubeMX is handy tool for auto generating initialization code. The only problem is that it will regenerate all initialization code any time you change anything in the CubeMX project. Fortunately it leave places where you can add custom code and protect them from regenerating but sometimes there no such places to satisfy your needs. There is one such place in the project - the usb_cdc.c/h files that define USB device descriptors. The TMC class implementation is based on the auto generated CDC class implementation. Unfortunately its impossible to patch descriptor safely so that they will not be overwritten by code auto generating. That's why both usb_cdc.c/h files just copied to the user files folders to protect them from overwriting. THe problem is that auto generation creates new copies of that files and add them to the project. So you either have to revert project back after regeneration or manually remove auto-generated usb_cdc.c from the project to avoid using improper USB descriptors.
+
 ## Author
 
 Oleg Volkov (olegv142@gmail.com)
