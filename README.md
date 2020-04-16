@@ -74,6 +74,14 @@ The DCMI interface implementation is rather straightforward so its hard to imple
 ## CubeMX code generation remarks
 CubeMX is handy tool for auto generating initialization code. The only problem is that it will regenerate all initialization code any time you change anything in the CubeMX project. Fortunately it leaves placeholders where you can add custom code protected from regenerating but sometimes there no suitable placeholders to satisfy your needs. There is one such problematic place in the project - the usb_cdc.c/h files that define USB device descriptors. The TMC class implementation is based on the auto generated CDC class implementation. Unfortunately its impossible to patch descriptors safely so that they will not be overwritten by code auto generating. That's why both usb_cdc.c/h files are just copied to the user source files folders to protect them from overwriting. The only problem with such approach is that auto generation creates new copies of that files and adds them to the project. So you either have to revert project modifications back after regenerating or manually remove auto-generated usb_cdc.c from the project to avoid using improper USB descriptors.
 
+## Host software requirements
+To be able to communicate with USB TMVC device you will need NI-VISA software. You can download it free of charge from [official cite](https://www.ni.com/en-us/support/downloads/drivers/download.ni-visa.html). Python scripts are written for python 2.7 so it must be installed on the host computer. The scripts are using pyvisa library for interfacing with VISA instruments. You can install it by typing **pip install pyvisa** in the console.
+
+The Xilinx ISE suite is required for FPGA projects compilation. It does not work on windows 10 but works in linux either native or in virtual machine.
+You can download it free of charge from [official cite](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive-ise.html)
+
+IAR EWARM IDE is used for STM32 code compilation.
+
 ## Author
 
 Oleg Volkov (olegv142@gmail.com)
