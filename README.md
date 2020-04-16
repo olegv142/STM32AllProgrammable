@@ -78,9 +78,9 @@ CubeMX is handy tool for auto generating initialization code. The only problem i
 To be able to communicate with USB TMVC device you will need NI-VISA software. You can download it free of charge from [official cite](https://www.ni.com/en-us/support/downloads/drivers/download.ni-visa.html). Python scripts are written for python 2.7 so it must be installed on the host computer. The scripts are using pyvisa library for interfacing with VISA instruments. You can install it by typing **pip install pyvisa** in the console.
 
 The Xilinx ISE suite is required for FPGA projects compilation. It does not work on windows 10 but works in linux either native or in virtual machine.
-You can download it free of charge from [official cite](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive-ise.html)
+You can download it free of charge from [official cite](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive-ise.html).
 
-IAR EWARM IDE is used for STM32 code compilation.
+The STM32 code is generated for IAR EWARM compiler. Yo can regenerate it by CubeMX after choosing any supported compiler. Just keep in mind that the project may require minor modifications described above after code regeneration.
 
 ## Author
 
