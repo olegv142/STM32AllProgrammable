@@ -4,7 +4,7 @@
 // Product version information
 //
 
-#define VENDOR "TeraSense"
-#define PRODUCT "TeraCam"
+#define VENDOR "OlegV"
+#define PRODUCT "All-Programmable System"
 #define VERSION "0.1"
 
