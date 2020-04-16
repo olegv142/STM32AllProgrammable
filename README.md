@@ -69,7 +69,7 @@ There are 2 FPGA test projects in hdl/test folder. The XME0601blink is just blin
 
 The SPI communication channel at the FPGA side is managed by the set of modules implemented in hdl/lib/spi_gate.v. The SPIGate module handles SPI bus signals and implements internal byte-wide bus for attaching IO ports addressable using 8 bit address transferred as the the first byte of any data packet. There are 2 kinds of ports implemented in spi_gate.v - 8 bit wide and 16 bit wide. They have handy features like output update strobe and one shot mode useful for triggering some actions on data writing. The 8 bit port may be used for transferring the stream of data bytes in either direction.
 
-The DCMI interface implementation is rather straightforward so its hard to implement anything reusable for that. The XME0601echo project implements echo port writing data received via SPI to buffer memory and echoing it back via DCMI interface. See hdl/test/XME0601echo/echo.v and dcmi_test.v for the details. The latter may serve as a good starting point for implementing your own DCMI transmitter.
+The DCMI interface implementation is rather straightforward so its hard to implement anything reusable for that. The XME0601echo project implements echo port saving data received via SPI to buffer memory and echoing it back via DCMI interface. See hdl/test/XME0601echo/echo.v and dcmi_test.v for the details. The latter may serve as a good starting point for implementing your own DCMI transmitter.
 
 ## Author
 
