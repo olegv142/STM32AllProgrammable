@@ -26,34 +26,34 @@ The above figure shows 17 signals connecting FPGA and MCU. 3 of them belong to S
 ## The application level API
 The application can communicate with MCU by sending messages and reading responses via USB TMC. Messages are always start from the text command optionally followed by numeric parameters and/or binary data packet. Parameters always start from # symbol. The number may begin with radix prefix - one of the X, x, H, h (hex), Q (octal), B (binary). If the parameter is followed by binary data the # symbol is used as separator. There are 2 types of commands - system and device-specific. The system commands start from * symbol. The device commands start from : symbol and may form the hierarchy. The first : prefix at the top of the hierarchy may be omitted. Spaces may be optionally inserted between hierarchical parts of the command and between command and parameter. Only single command may sent at a time. Below is the list of commands supported so far.
 
-*IDN?
+__*IDN?__  
 The only system command supported. Returns Device identification string that consists of vendor name, product name, serial number and version separated by commas.
 
-TEST:ECHO<DATA>
+__TEST:ECHO\<DATA\>__  
 Reply with the same data that follows the command. The maximum size of the data is 1024 bytes. The test/echo.py script uses this command to test USB communications.
 
-PL:ACTIVE?
+__PL:ACTIVE?__  
 Returns single character string describing the configuration state of the FPGA: '0' - idle, '1' - active, not configured, '2' - active, configured
 
-PL:ACTIVE #N
+__PL:ACTIVE #N__  
 Change the configuration state of the FPGA according to the numerical parameter passed. Technically the command just change the state of PROGRAM_B signal. Zero N turns PROGRAM_B low, so the FPGA becomes idle, any non-zero N turns PROGRAM_B high so the FPGA becomes active and make an attempt to configure itself. The command has no response.
 
-PL:FLASH:WR<PACKET>
+__PL:FLASH:WR\<PACKET\>__  
 Send binary data packet to FPGA flash. The FPGA state should be set to idle before using any PL:FLASH commands. The data packet typically starts from the flash command byte optionally followed by the address and data. See flash chip datasheet for the details. The PL:FLASH:WR command just treats the data packet as opaque. The command response is empty string.
 
-PL:FLASH:RD #Len#<PACKET>
+__PL:FLASH:RD #Len#\<PACKET\>__  
 Send binary data packet to FPGA flash and read response. The response will include the data read from the flash in response to the packet plus additional Len bytes read after the packet is sent. The command response is the data string with length equal to the PACKET length plus Len bytes.
 
-PL:FLASH:WAit #Tout
+__PL:FLASH:WAit #Tout__  
 Continuously read flash status register waiting for the flash to become non-busy. The Tout parameter specifies the maximum time to wait in milliseconds. The command response is single flash status byte so the sender may check if the wait was successful or not.
 
-PL:FLASH:PRog #Tout#<PACKET>
+__PL:FLASH:PRog #Tout#\<PACKET\>__  
 This is the flash programming helper command. It combines waiting for the non-busy status, enabling write and writing binary data PACKET in the single command. In case the status waiting was not succeeded within Tout (expressed in milliseconds) the last two operations are skipped. The command response is single flash status byte so the sender may check if the wait (and so subsequent write) was successful or not.
 
-PL:TX<PACKET>
+__PL:TX\<PACKET\>__  
 Exchange binary data PACKET with FPGA via SPI bus. Respond with the data received. So the response length always equals to the PACKET length.
 
-PL:PULL #Len#<PACKET>
+__PL:PULL #Len#\<PACKET\>__  
 Receive data from FPGA via DCMI bus. The binary data PACKET will be sent first via SPI bus to trigger data transaction on DCMI bus (so the FPGA should handle PACKET send appropriately). The data length parameter Len is expressed in 4 byte units so there is no way to receive an amount of data with size not multiple of 4. The response is the concatenation of the response to the PACKET received via FPGA bus and the data received via DCMI bus. Those two parts of the response may be separated by alignment padding.
 
 The python modules python/pl.py and python/pl_flash.py contains code for sending requests described above as well as receiving and parsing responses.
