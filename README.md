@@ -80,7 +80,7 @@ To be able to communicate with USB TMC device you will need NI-VISA software. Yo
 The Xilinx ISE suite is required for FPGA projects compilation. It does not work on windows 10 but works in linux either native or in virtual machine.
 You can download it free of charge from [official cite](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive-ise.html).
 
-The STM32 code is generated for IAR EWARM compiler. Yo can regenerate it by CubeMX after choosing any supported compiler. Just keep in mind that the project may require minor modifications described above after code regeneration.
+The STM32 code is generated for IAR EWARM compiler. Yo can regenerate it by CubeMX after choosing any supported compiler. Just keep in mind that the project may require minor modifications described above after code regeneration. The CubeMX software can be downloaded from [official cite](https://www.st.com/en/development-tools/stm32cubemx.html#get-software).
 
 ## Author
 
