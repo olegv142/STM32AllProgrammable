@@ -21,6 +21,8 @@ To cope with transferring large amounts of data the USB interface utilizes high 
 
 ![The core component interconnections](https://github.com/olegv142/STM32AllProgrammable/blob/master/doc/schematic.png)
 
+The above figure shows 17 signals connecting FPGA and MCU. 3 of them belong to SPI port of MCU, 10 belong to DCMI port and 4 are GPIO pins - 2 used as SPI chip select signals and 2 are used to control FPGA configuration state. To save pins the same SPI signals are used for flash programming and data exchange with FPGA. Those two modes use separate chip select signals shown as FLASH_CS and PL_CS on the figure. The former is connected to the flash so it is used for flash programming. To gain access to the flash the MCU set PROGRAM_B signal to low. While it is low the FPGA turns all its pins to high impedance state. When MCU release flash control it turns SPI pins to high impedance state and set PROGRAM_B to high allowing FPGA to configure itself. Once FPA configuration completes the DONE signal turns high. The MCU monitors DONE signal and reconfigure SPI interface when its high to be able to exchange data with FPGA. The DCMI bus connection is pretty straightforward. The FPGA plays the master role so every transaction should be triggered by MCU using SPI communication channel. The horizontal sync signal is not used and just connected to ground at MCU.
+
 ## The application level API
 
 ## FPGA firmware loading
