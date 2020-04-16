@@ -133,6 +133,11 @@ static void tmc_pl_flash_prog(uint8_t const* pbuf, unsigned len, unsigned wait)
 
 static void tmc_rx_pl_flash_sub_command(uint8_t const* pbuf, unsigned len)
 {
+	if (pl_status != pl_inactive) {
+		// Wrong FPGA status
+		++tmc_wr_ignored;
+		return;
+	}
 	unsigned skip, skip_arg, arg;
 	if (PREFIX_MATCHED(CMD_WR, pbuf, len)) {
 		tmc_pl_flash_tx(pbuf + STRZ_LEN(CMD_WR), len - STRZ_LEN(CMD_WR), 0, false);
