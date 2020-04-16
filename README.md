@@ -59,6 +59,9 @@ Receive data from FPGA via DCMI bus. The binary data PACKET will be sent first v
 The python modules python/pl.py and python/pl_flash.py contains code for sending requests described above as well as receiving and parsing responses.
 
 ## FPGA firmware loading
+The API described above have all necessary commands to load FPGA firmware to the flash. The python/pl_flash.py module implements flash loading routine. To use it issue the following command in console:  
+**python pl_flash.py --program \<your_firmware.bin\>**
+Note that you need binary firmware image rather than bitstream file. Creating binary image is not enabled by default in Xilinx ISE. You need to go to the Process Properties of Generate Programming File (by right-clicking it) and select Create Binary Configuration File option. You can also increase Configuration Rate and set proper SPI Configuration Bus Width (4 for the quad SPI) to speed up FPGA configuration.
 
 ## FPGA API and test projects
 
