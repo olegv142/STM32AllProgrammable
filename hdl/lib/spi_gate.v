@@ -13,8 +13,7 @@ module SPIGate(
     input  [7:0]  TXD,  // Data to be transmitted to the host
     output [7:0]  ADDR, // Port address received from the host
     output        SEL,  // Port selected. Become active when the the address is valid. Reset after host deselect interface on transfer completion.
-    output        TXE,  // Transmit enable. Transmitting port should put data to TXD, it will be latched by gate on second clock edge.
-    output        RXE,  // Receive enable. Receiving port should latch RXD on first clock rising edge.
+    output        RXE,  // Receive enable. If active, receiving port should latch RXD on rising edge of the clock.
     // Global clock
     input         CLK
     );
@@ -80,15 +79,12 @@ begin
         selected <= 1;
         if (data_valid)
             data_bits <= 0;
+        need_data <= 0;
         if (!selected || data_valid)
             need_data <= 1;
-        if (need_data)
-            load_data <= 1;
-        if (load_data) begin 
+        load_data <= need_data;
+        if (load_data)
             data <= TXD;
-            need_data <= 0;
-            load_data <= 0;
-        end
     end
 end
 
@@ -96,18 +92,16 @@ assign MISO = data[7];
 assign SEL  = selected;
 assign RXD  = data;
 assign RXE  = data_valid;
-assign TXE  = need_data;
 
 endmodule
 
 module IOPort8
     #(
+        parameter ADDRESS = 0, // Port address
         // If set to 1 the output will only be active for single clock period. After that it will be set to all 0s.
         parameter  ONE_SHOT = 0
     )
     (
-    // Address
-    input  [7:0]  ADDRESS, // Port address
     input  [7:0]  DI,      // Data input
     output [7:0]  DO,      // Data output
     output        STRB,    // Data strobe - becomes active for one clock period whenever DO is updated
@@ -116,18 +110,17 @@ module IOPort8
 
     // Internal bus
     input  [7:0]  RXD,  // Data received from the host
-    output [7:0]  TXD,  // Data to be transmitted to the host
+    output [7:0]  TXD,  // Data to be transmitted to the host. Getaway latches the data on second clock edge after STRT or STRB signals becoming active.
     input  [7:0]  ADDR, // Port address received from the host
     input         SEL,  // Port selected. Become active when the the address is valid. Reset after host deselect interface on transfer completion.
-    input         TXE,  // Transmit enable. Transmitting port should put data to TXD, it will be latched by gate on second clock edge.
-    input         RXE,  // Receive enable. Receiving port should latch RXD on first clock rising edge.
+    input         RXE,  // Receive enable. If active, receiving port should latch RXD on rising edge of the clock.
     // Global clock
     input         CLK
     );
 
 reg [7:0] data_rx;
 assign DO = data_rx;
-assign TXD = (TXE && ADDR == ADDRESS) ? DI : 8'bz;
+assign TXD = (SEL && ADDR == ADDRESS) ? DI : 8'bz;
 
 reg strobe;
 assign STRB = strobe;
@@ -152,12 +145,11 @@ endmodule
 
 module IOPort16
     #(
+        parameter ADDRESS = 0, // Port address
         // If set to 1 the output will only be active for single clock period. After that it will be set to all 0s.
         parameter  ONE_SHOT = 0
     )
     (
-    // Address
-    input  [7:0]  ADDRESS, // Port address
     input  [15:0] DI,      // Data input
     output [15:0] DO,      // Data output
     output        STRB,    // Strobe - becomes active for one clock period whenever DO is updated
@@ -167,8 +159,7 @@ module IOPort16
     output [7:0]  TXD,  // Data to be transmitted to the host
     input  [7:0]  ADDR, // Port address received from the host
     input         SEL,  // Port selected. Become active when the the address is valid. Reset after host deselect interface on transfer completion.
-    input         TXE,  // Transmit enable. Transmitting port should put data to TXD, it will be latched by gate on second clock edge.
-    input         RXE,  // Receive enable. Receiving port should latch RXD on first clock rising edge.
+    input         RXE,  // Receive enable. If active, receiving port should latch RXD on rising edge of the clock.
     // Global clock
     input         CLK
     );
@@ -181,7 +172,7 @@ reg strobe;
 assign STRB = strobe;
 
 reg hbyte;
-assign TXD = (TXE && ADDR == ADDRESS) ? (!hbyte ? DI[7:0] : DI[15:8]) : 8'bz;
+assign TXD = (SEL && ADDR == ADDRESS) ? (!hbyte ? DI[7:0] : DI[15:8]) : 8'bz;
 
 always @(posedge CLK)
 begin
