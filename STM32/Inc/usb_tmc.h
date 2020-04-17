@@ -24,5 +24,6 @@ void USB_TMC_RequestResponse(uint8_t tag, unsigned max_len);
 // Reply to host.
 uint8_t USB_TMC_Reply(unsigned len, uint8_t tag);
 
-// Asynchronous processing (in non-ISR context)
+// Asynchronous processing routine.
+// Called periodically in main() loop.
 void USB_TMC_Process(void);
