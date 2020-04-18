@@ -45,7 +45,7 @@ wire        rxe;
 // The gate instance provide interface between external SPI bus
 // and internal parallel bus where IO ports are attached
 
-SPIGate gate(
+SPIGate spi_gate(
 	.SCLK(SCLK),
 	.MOSI(MOSI),
 	.MISO(MISO),
@@ -58,6 +58,21 @@ SPIGate gate(
 	.CLK(Clk)
 );
 
+wire [7:0] mdata;
+wire dclken;
+wire [1:0] dreq;
+wire [1:0] dack;
+
+DCMIGate #(.M(2)) dcmi_gate(
+    .DATA(DATA),
+    .DSYNC(DSYNC),
+    .DCLK(DCLK),
+    .MDATA(mdata),
+    .DCLKEN(dclken),
+    .DREQ(dreq),
+    .DACK(dack),
+    .CLK(Clk)
+);
 
 //
 // Port #0 controls on-board LEDs
@@ -123,8 +138,6 @@ IOPort16 #(.ADDRESS(2)) port2 (
 	.CLK(Clk)
 );
 
-/*
-
 // Port #3 triggers DCMI test frame transmission
 
 wire [7:0] p3data;
@@ -140,16 +153,14 @@ IOPort8 #(.ADDRESS(3), .ONE_SHOT(1)) port3 (
 	.CLK(Clk)
 );
 
-wire dcmi_start = p3data[0];
-
 DCMITester dcmi_test (
-    .START(dcmi_start),
-    .DATA(DATA),
-    .DSYNC(DSYNC),
-    .DCLK(DCLK),
-    .Clk(Clk)
+    .START(p3data[0]),
+    .MDATA(mdata),
+    .DCLKEN(dclken),
+    .DREQ(dreq[0]),
+    .DACK(dack[0]),
+    .CLK(Clk)
 );
-*/
 
 //
 // Port #4 serves for DCMI bus testing
@@ -175,19 +186,20 @@ IOPort8 #(.ADDRESS(4)) port4 (
 	.CLK(Clk)
 );
 
-DCMITransmitter dcmi_tx (
+DCMITxBuff dcmi_tx (
     .DI(p4data),
     .WR(p4strobe),
     .RST(p4start),
     .START(p4done),
-    .DATA(DATA),
-    .DSYNC(DSYNC),
-    .DCLK(DCLK),
-    .Clk(Clk)
+    .MDATA(mdata),
+    .DCLKEN(dclken),
+    .DREQ(dreq[1]),
+    .DACK(dack[1]),
+	.CLK(Clk)
     );
 
 //
-// Port #5 transmit the sequence on sequential numbers.
+// Port #5 transmit the sequence of sequential numbers.
 // This is the example of the streaming data to MCU using IOPort8
 // If you need to stream data in the opposite direction via SPI bus
 // see DCMITransmitter implementation
