@@ -42,6 +42,14 @@ wire        sel;
 wire        txe;
 wire        rxe;
 
+wire [7:0] data0;
+wire [7:0] data1;
+wire       dsync0;
+wire       dsync1;
+
+assign DATA  = data0 | data1;
+assign DSYNC = dsync0 | dsync1;
+
 // The gate instance provide interface between external SPI bus
 // and internal parallel bus where IO ports are attached
 
@@ -58,6 +66,13 @@ SPIGate gate(
 	.CLK(Clk)
 );
 
+wire dcmi_clken;
+
+DCMIClkGen dcmi_clk_gen(
+    .DCLK(DCLK),
+    .CLKEN(dcmi_clken),
+    .CLK(Clk)
+);
 
 //
 // Port #0 controls on-board LEDs
@@ -123,8 +138,6 @@ IOPort16 #(.ADDRESS(2)) port2 (
 	.CLK(Clk)
 );
 
-/*
-
 // Port #3 triggers DCMI test frame transmission
 
 wire [7:0] p3data;
@@ -144,12 +157,11 @@ wire dcmi_start = p3data[0];
 
 DCMITester dcmi_test (
     .START(dcmi_start),
-    .DATA(DATA),
-    .DSYNC(DSYNC),
-    .DCLK(DCLK),
-    .Clk(Clk)
+    .DATA(data0),
+    .DSYNC(dsync0),
+    .CLKEN(dcmi_clken),
+    .CLK(Clk)
 );
-*/
 
 //
 // Port #4 serves for DCMI bus testing
@@ -175,15 +187,15 @@ IOPort8 #(.ADDRESS(4)) port4 (
 	.CLK(Clk)
 );
 
-DCMITransmitter dcmi_tx (
+DCMITxBuffer dcmi_tx (
     .DI(p4data),
     .WR(p4strobe),
     .RST(p4start),
     .START(p4done),
-    .DATA(DATA),
-    .DSYNC(DSYNC),
-    .DCLK(DCLK),
-    .Clk(Clk)
+    .DATA(data1),
+    .DSYNC(dsync1),
+    .CLKEN(dcmi_clken),
+    .CLK(Clk)
     );
 
 //
