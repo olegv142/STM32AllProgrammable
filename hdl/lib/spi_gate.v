@@ -120,22 +120,24 @@ module IOPort8
 
 reg [7:0] data_rx;
 assign DO = data_rx;
-assign TXD = (SEL && ADDR == ADDRESS) ? DI : 8'bz;
+
+wire addr_valid = SEL && ADDR == ADDRESS;
+assign TXD = addr_valid ? DI : 8'bz;
 
 reg strobe;
 assign STRB = strobe;
 
 reg selected;
-assign STRT = SEL & ~selected;
-assign DONE = ~SEL && selected;
+assign STRT = addr_valid & ~selected;
+assign DONE = ~addr_valid & selected;
 
 always @(posedge CLK)
 begin
-    selected <= SEL;
+    selected <= addr_valid;
     strobe <= 0;
     if (ONE_SHOT)
         data_rx <= 'b0;
-    if (RXE && ADDR == ADDRESS) begin
+    if (RXE && addr_valid) begin
         data_rx <= RXD;
         strobe <= 1;
     end
@@ -171,25 +173,26 @@ assign DO = data_out;
 reg strobe;
 assign STRB = strobe;
 
-reg hbyte;
-assign TXD = (SEL && ADDR == ADDRESS) ? (!hbyte ? DI[7:0] : DI[15:8]) : 8'bz;
+reg got_byte;
+wire addr_valid = SEL && ADDR == ADDRESS;
+assign TXD = addr_valid ? (!got_byte ? DI[7:0] : DI[15:8]) : 8'bz;
 
 always @(posedge CLK)
 begin
     strobe <= 0;
     if (ONE_SHOT)
         data_out <= 'b0;
-    if (!SEL && hbyte) begin
-        hbyte <= 0;
+    if (!addr_valid && got_byte) begin
+        got_byte <= 0;
         data_out <= data_rx;
+        strobe <= 1;
     end
-    if (RXE && ADDR == ADDRESS) begin
-        if (!hbyte)
+    if (RXE && addr_valid) begin
+        if (!got_byte)
             data_rx[7:0] <= RXD;
         else
             data_rx[15:8] <= RXD;
-        strobe <= 1;
-        hbyte <= 1;
+        got_byte <= 1;
     end
 end
 

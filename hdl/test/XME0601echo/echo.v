@@ -44,26 +44,28 @@ wire        rxe;
 
 wire [7:0] data0;
 wire [7:0] data1;
+wire [7:0] data2;
 wire       dsync0;
 wire       dsync1;
+wire       dsync2;
 
-assign DATA  = data0 | data1;
-assign DSYNC = dsync0 | dsync1;
+assign DATA  = data0 | data1 | data2;
+assign DSYNC = dsync0 | dsync1 | dsync2;
 
 // The gate instance provide interface between external SPI bus
 // and internal parallel bus where IO ports are attached
 
 SPIGate gate(
-	.SCLK(SCLK),
-	.MOSI(MOSI),
-	.MISO(MISO),
-	.nCS(nCS),
-	.RXD(rxd),
-	.TXD(txd),
-	.ADDR(addr),
-	.SEL(sel),
-	.RXE(rxe),
-	.CLK(Clk)
+    .SCLK(SCLK),
+    .MOSI(MOSI),
+    .MISO(MISO),
+    .nCS(nCS),
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
 );
 
 wire dcmi_clken;
@@ -81,14 +83,14 @@ wire [7:0] p0data;
 assign Led = ~p0data[1:0];
 
 IOPort8 #(.ADDRESS(0)) port0 (
-	.DI(8'hde),
-	.DO(p0data),
-	.RXD(rxd),
-	.TXD(txd),
-	.ADDR(addr),
-	.SEL(sel),
-	.RXE(rxe),
-	.CLK(Clk)
+    .DI(8'hde),
+    .DO(p0data),
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
 );
 
 //
@@ -100,15 +102,15 @@ reg  [7:0] p1data = 0;
 wire p1strobe;
 
 IOPort8 #(.ADDRESS(1), .ONE_SHOT(1)) port1 (
-	.DI(p1data),
-	.DO(p1out),
+    .DI(p1data),
+    .DO(p1out),
     .STRB(p1strobe),
-	.RXD(rxd),
-	.TXD(txd),
-	.ADDR(addr),
-	.SEL(sel),
-	.RXE(rxe),
-	.CLK(Clk)
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
 );
 
 // We don't really need to latch data in order to echo it back
@@ -128,14 +130,14 @@ end
 wire [15:0] p2data;
 
 IOPort16 #(.ADDRESS(2)) port2 (
-	.DI(p2data),
-	.DO(p2data),
-	.RXD(rxd),
-	.TXD(txd),
-	.ADDR(addr),
-	.SEL(sel),
-	.RXE(rxe),
-	.CLK(Clk)
+    .DI(p2data),
+    .DO(p2data),
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
 );
 
 // Port #3 triggers DCMI test frame transmission
@@ -143,20 +145,20 @@ IOPort16 #(.ADDRESS(2)) port2 (
 wire [7:0] p3data;
 
 IOPort8 #(.ADDRESS(3), .ONE_SHOT(1)) port3 (
-	.DI(8'hdc),
-	.DO(p3data),
-	.RXD(rxd),
-	.TXD(txd),
-	.ADDR(addr),
-	.SEL(sel),
-	.RXE(rxe),
-	.CLK(Clk)
+    .DI(8'hdc),
+    .DO(p3data),
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
 );
 
 wire dcmi_start = p3data[0];
 
 DCMITester dcmi_test (
-    .START(dcmi_start),
+    .TX_START(dcmi_start),
     .DATA(data0),
     .DSYNC(dsync0),
     .CLKEN(dcmi_clken),
@@ -174,24 +176,24 @@ wire p4strobe;
 wire p4start;
 
 IOPort8 #(.ADDRESS(4)) port4 (
-	.DI(8'hdc),
-	.DO(p4data),
+    .DI(8'hdc),
+    .DO(p4data),
     .STRB(p4strobe),
     .STRT(p4start),
     .DONE(p4done),
-	.RXD(rxd),
-	.TXD(txd),
-	.ADDR(addr),
-	.SEL(sel),
-	.RXE(rxe),
-	.CLK(Clk)
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
 );
 
 DCMITxBuffer dcmi_tx (
     .DI(p4data),
     .WR(p4strobe),
     .RST(p4start),
-    .START(p4done),
+    .TX_START(p4done),
     .DATA(data1),
     .DSYNC(dsync1),
     .CLKEN(dcmi_clken),
@@ -210,15 +212,15 @@ wire p5strobe;
 wire p5start;
 
 IOPort8 #(.ADDRESS(5)) port5 (
-	.DI(p5data),
+    .DI(p5data),
     .STRB(p5strobe),
     .STRT(p5start),
-	.RXD(rxd),
-	.TXD(txd),
-	.ADDR(addr),
-	.SEL(sel),
-	.RXE(rxe),
-	.CLK(Clk)
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
 );
 
 always @(posedge Clk)
@@ -228,5 +230,47 @@ begin
     if (p5strobe)
         p5data <= p5data + 1;
 end
+
+//
+// Writing to port 6 triggers the transmission of the chip scope
+// data collected on falling edge of nCS signal 
+//
+
+wire p6strobe;
+wire p6start;
+wire p6done;
+
+IOPort8 #(.ADDRESS(6)) port6 (
+    .STRB(p6strobe),
+    .STRT(p6start),
+    .DONE(p6done),
+    .RXD(rxd),
+    .TXD(txd),
+    .ADDR(addr),
+    .SEL(sel),
+    .RXE(rxe),
+    .CLK(Clk)
+);
+
+wire [7:0] capture;
+
+assign capture[0] = nCS;
+assign capture[1] = SCLK;
+assign capture[2] = MOSI;
+assign capture[3] = sel;
+assign capture[4] = rxe;
+assign capture[5] = p6start;
+assign capture[6] = p6strobe;
+assign capture[7] = p6done;
+
+DCMICaptureBuffer dcmi_capture (
+    .DI(capture),
+    .TRIG(~nCS),
+    .TX_START(p6start),
+    .DATA(data2),
+    .DSYNC(dsync2),
+    .CLKEN(dcmi_clken),
+    .CLK(Clk)
+);
 
 endmodule
