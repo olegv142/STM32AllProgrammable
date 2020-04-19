@@ -73,7 +73,7 @@ The DCMI interface implementation is rather straightforward so its hard to imple
 
 ## Chip scope
 
-The chip scope is handy tool for observing signals in your design. It have the 4Kbyte buffer that may capture 8 bit wide signal at internal clock rate. The capture is triggered by rising edge of the trigger signal that may be routed to any source of your choice. The trace collected in the buffer may be transmitted to the host via DCMI bus. The test module hdl/test/XME0601echo/echo.v has an example of using chip scope to capture SPI bus signals. Python module python/chipscope.py may be used to receive the trace and format it as the text. See hdl/test/XME0601echo/test/capture.py for example of using it. Here is the fragment of the formatted output showing the reception of SPI address byte:
+The chip scope is handy tool for observing signals in your design. It have the 4Kbyte buffer that may capture 8 bit wide signal at internal clock rate. The capture is triggered by rising edge of the trigger signal that may be routed to any source of your choice. The trace collected in the buffer may be transmitted to the host via DCMI bus. The chip scope is implemented as DCMICaptureBuffer module in hdl/lib/dcmi_util.v. The test module hdl/test/XME0601echo/echo.v has an example of using chip scope to capture SPI bus signals. Python module python/chipscope.py may be used to receive the trace and format it as the text. See hdl/test/XME0601echo/test/capture.py for example of using it. Here is the fragment of the formatted output showing the reception of SPI address byte:
 ```
 +128
 nCS    ________________________________________________________________
