@@ -12,9 +12,11 @@ TRACE_LEN = 1024 # In 32 bit words
 def capture_trace(dev, addr, cmd):
 	return pl.pull(dev, addr, cmd, TRACE_LEN)
 
-def print_trace(t, f, line_len = 128, hdrs = ('_',) * 8):
+def print_trace(t, f, line_len = 128, hdrs = ()):
 	size, off = len(t), 0
-	hwidth = 1 + max(len(h) for h in hdrs)
+	hwidth = 0
+	if hdrs: hwidth = max(len(h) for h in hdrs)
+	hwidth = 2 + max(1, hwidth)
 	skip, last_byte = False, None
 	while size:
 		chunk = min(size, line_len)
@@ -32,7 +34,10 @@ def print_trace(t, f, line_len = 128, hdrs = ('_',) * 8):
 		skip = False
 		f.write('+%u\n' % off)
 		for b in range(8):
-			h = hdrs[b]
+			if b < len(hdrs):
+				h = hdrs[b]
+			else:
+				h = '_'
 			f.write(h + ' ' * (hwidth - len(h)))
 			bit = 1 << b
 			for i in range(chunk):
