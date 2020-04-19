@@ -4,7 +4,7 @@ import pl
 import chipscope as cs
 
 #
-# Capture SPI receiver signal, see XME0601echo/echo.v for details
+# Capture SPI receiver signals, see XME0601echo/echo.v for details
 #
 CAPTURE_PORT = 6
 CAPTURE_CMD = '\1\2\3\4'
