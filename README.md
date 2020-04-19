@@ -71,6 +71,20 @@ The SPI communication channel at the FPGA side is managed by the set of modules 
 
 The DCMI interface implementation is rather straightforward so its hard to implement anything reusable for that but the clock generator. There are several specialized DCMI transmitter implementations collected in hdl/lib/dcmi_util.v. They may serve as a good starting point for implementing your own DCMI transmitter. Several DCMI transmitters may coexist in the same design provided that you combine their outputs by bitwise ORing therm. For the sake of testing the XME0601echo project implements echo port saving data received via SPI to buffer memory and echoing it back via DCMI interface. See hdl/test/XME0601echo/echo.v for the details. 
 
+## Chip scope
+
+The chip scope is handy tool for observing signals in your design. It have the 4Kbyte buffer that may capture 8 bit wide signal at internal clock rate. The capture is triggered by rising edge of the trigger signal that may be routed to any source of your choice. The trace collected in the buffer may be transmitted to the host via DCMI bus. The test module hdl/test/XME0601echo/echo.v has an example of using chip scope to capture SPI bus signals. Python module python/chipscope.py may be used to receive the trace and format it as the text. See hdl/test/XME0601echo/test/capture.py for example of using it. Here is the fragment of the formatted output showing the reception of SPI address byte:
+```
++128
+nCS    ________________________________________________________________
+SCLK   _____---___--___---___--___---___---__---___---_________________
+MOSI   ______________________________-----------_______________________
+SEL    _______________________________________________-----------------
+RXE    ________________________________________________________________
+START  _______________________________________________-________________
+STRB   ________________________________________________________________
+DONE   ________________________________________________________________
+```
 ## CubeMX code generation remarks
 CubeMX is handy tool for auto generating initialization code. The only problem is that it will regenerate all initialization code any time you change anything in the CubeMX project (STM32/F407HS.ioc). Fortunately it leaves placeholders where you can add custom code protected from regenerating but sometimes there no suitable placeholders to satisfy your needs. There is one such problematic place in the project - the usb_cdc.c/h files that define USB device descriptors. The TMC class implementation is based on the auto generated CDC class implementation. Unfortunately its impossible to patch descriptors safely so that they will not be overwritten by code auto generating. That's why both usb_cdc.c/h files are just copied to the user source files folders to protect them from overwriting. The only problem with such approach is that auto generation creates new copies of that files and adds them to the project. So you either have to revert project modifications back after regenerating or manually remove auto-generated usb_cdc.c from the project to avoid using improper USB descriptors.
 
