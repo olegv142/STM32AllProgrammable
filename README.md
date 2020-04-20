@@ -71,7 +71,6 @@ The SPI communication channel at the FPGA side is managed by the set of modules 
 
 The DCMI interface implementation is rather straightforward so its hard to implement anything reusable for that but the clock generator. There are several specialized DCMI transmitter implementations collected in hdl/lib/dcmi_util.v. They may serve as a good starting point for implementing your own DCMI transmitter. Several DCMI transmitters may coexist in the same design provided that you combine their outputs by bitwise ORing therm. For the sake of testing the XME0601echo project implements echo port saving data received via SPI to buffer memory and echoing it back via DCMI interface. See hdl/test/XME0601echo/echo.v for the details. 
 
-[create an anchor](#chip-scope)
 ## Chip scope
 
 The chip scope is handy tool for observing signals in your design. It have the 4Kbyte buffer that may capture 8 bit wide signal at internal clock rate. The capture is triggered by rising edge of the trigger signal that may be routed to any source of your choice. The trace collected in the buffer may be transmitted to the host via DCMI bus. The chip scope is implemented as DCMICaptureBuffer module in hdl/lib/dcmi_util.v. The test module hdl/test/XME0601echo/echo.v has an example of using chip scope to capture SPI bus signals. Python module python/chipscope.py may be used to receive the trace and format it as the text. See hdl/test/XME0601echo/test/capture.py for example of using it. Here is the fragment of the formatted output showing the reception of SPI address byte:
